@@ -476,6 +476,17 @@
           value: function getSorteoName(sorteo) {
             if (sorteo.pais.id == this.COSTA_RICA_ID && sorteo.grupo.sorteo_tipo == 'j3') return '3 Monazos';
             return this.sorteoDict[sorteo.grupo.sorteo_tipo];
+          } // nombre del sorteo y su hora: si el nombre ya trae la hora (ej. "NICA 11 AM")
+          // se deja tal cual, si no se agrega " - 11:00 AM"
+
+        }, {
+          key: "tituloJuego",
+          value: function tituloJuego(juegos) {
+            var s = juegos && juegos[0] && juegos[0].sorteo || {};
+            var nombre = s.sorteo_nombre || this.getSorteoName(s);
+            if (!nombre || /\d/.test(nombre)) return nombre || '';
+            var h = s.hora ? moment__WEBPACK_IMPORTED_MODULE_7___default()(s.hora).format('hh:mm A') : '';
+            return h ? nombre + ' - ' + h : nombre;
           }
         }]);
       }();
@@ -516,7 +527,7 @@
       /* harmony default export */
 
 
-      __webpack_exports__["default"] = "<ion-header>\n\n  <ion-toolbar color='light'>\n    <ion-buttons slot=\"start\">\n        <ion-back-button [text]='\"\"'></ion-back-button>\n    </ion-buttons>\n    <ion-title class=\"center\">Juegos Activos</ion-title>\n   \n</ion-toolbar>\n\n  \n</ion-header>\n\n<ion-content>\n  <ion-list>\n    <ion-list-header>\n      <ion-grid>\n          <ion-row class=\"header top\">\n              <ion-col size='4'>Juego </ion-col>\n              <ion-col size='4' style=\"margin-left: -10px;\">Boletos </ion-col>\n              <ion-col size='4'>Sorteos </ion-col>\n          </ion-row>\n      </ion-grid>\n  </ion-list-header>\n\n  <h2 *ngIf='juegosGrouped.length == 0 && loaded' style=\"color: darkgray; text-align: center;\">NO HAY JUEGOS PENDIENTES</h2>\n  <ion-grid>\n    <ion-item  button *ngFor=\"let juegos of juegosGrouped\" (click)='juegoClicked(juegos)' class=\"ion-no-padding\">\n\n      <ion-row class=\"bc\">\n          <ion-col size='4'><strong>{{juegos[0].sorteo.sorteo_nombre || getSorteoName(juegos[0].sorteo)}}</strong><br><span class=\"sub\">{{juegos[0].fecha  | date: 'dd/MM/yyyy'}}</span> <span class=\"sub\">{{juegos[0].fecha | date: 'hh:mm:ss a'}}</span>\n            <!-- <br> -->\n            <span>{{juegos[0].sorteo.pais.nombre}}</span>\n          </ion-col>\n          <ion-col size='4'> <strong>{{getCantBoletos(juegos)}}</strong> </ion-col>\n          <ion-col> <strong>{{juegos.length}}</strong>\n            <ng-container *ngIf=\"isCompleted(juegos)\">\n              <p style=\"font-weight: bold; color: green; margin: 0; margin-top: 4px\">COMPLETO</p>\n              <p style=\"font-weight: bold; color: green; margin: 0;\">#{{getGanador(juegos)}}</p>\n            </ng-container>\n          </ion-col>\n                     \n      </ion-row>\n\n\n  </ion-item>\n  </ion-grid>\n  </ion-list>\n</ion-content>\n";
+      __webpack_exports__["default"] = "<ion-header>\n\n  <ion-toolbar color='light'>\n    <ion-buttons slot=\"start\">\n        <ion-back-button [text]='\"\"'></ion-back-button>\n    </ion-buttons>\n    <ion-title class=\"center\">Juegos Activos</ion-title>\n   \n</ion-toolbar>\n\n  \n</ion-header>\n\n<ion-content>\n  <ion-list>\n    <ion-list-header>\n      <ion-grid>\n          <ion-row class=\"header top\">\n              <ion-col size='4'>Juego </ion-col>\n              <ion-col size='4' style=\"margin-left: -10px;\">Boletos </ion-col>\n              <ion-col size='4'>Sorteos </ion-col>\n          </ion-row>\n      </ion-grid>\n  </ion-list-header>\n\n  <h2 *ngIf='juegosGrouped.length == 0 && loaded' style=\"color: darkgray; text-align: center;\">NO HAY JUEGOS PENDIENTES</h2>\n  <ion-grid>\n    <ion-item  button *ngFor=\"let juegos of juegosGrouped\" (click)='juegoClicked(juegos)' class=\"ion-no-padding\">\n\n      <ion-row class=\"bc\">\n          <ion-col size='4'><strong>{{tituloJuego(juegos)}}</strong><br><span class=\"sub\">{{juegos[0].fecha  | date: 'dd/MM/yyyy'}}</span> <span class=\"sub\">{{juegos[0].fecha | date: 'hh:mm:ss a'}}</span>\n            <!-- <br> -->\n            <span>{{juegos[0].sorteo.pais.nombre}}</span>\n          </ion-col>\n          <ion-col size='4'> <strong>{{getCantBoletos(juegos)}}</strong> </ion-col>\n          <ion-col> <strong>{{juegos.length}}</strong>\n            <ng-container *ngIf=\"isCompleted(juegos)\">\n              <p style=\"font-weight: bold; color: green; margin: 0; margin-top: 4px\">COMPLETO</p>\n              <p style=\"font-weight: bold; color: green; margin: 0;\">#{{getGanador(juegos)}}</p>\n            </ng-container>\n          </ion-col>\n                     \n      </ion-row>\n\n\n  </ion-item>\n  </ion-grid>\n  </ion-list>\n</ion-content>\n";
       /***/
     }
   }]);
