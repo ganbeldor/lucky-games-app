@@ -3232,7 +3232,9 @@
           this.isOpen = true;
           this.preview = false;
           this.factura_nombre = '';
-          this.printReceipt = true;
+          this.printReceipt = true; // despues de imprimir el frente se pregunta por el dorso del boleto
+
+          this.dorsoPendiente = false;
           this.numerosRegulares = [];
           this.numerosJuega3 = [];
           this.numerosFechas = [];
@@ -4561,11 +4563,33 @@
                                 return this.util.presentAlert('Error', 'Error al desconectar la impresora, por favor reiniciar el Bluetooth');
 
                               case 4:
+                                if (!this.dorsoPendiente) {
+                                  _context35.n = 7;
+                                  break;
+                                }
+
+                                this.dorsoPendiente = false;
+                                _context35.n = 5;
+                                return this.preguntarDorso();
+
+                              case 5:
+                                if (!_context35.v) {
+                                  _context35.n = 7;
+                                  break;
+                                }
+
+                                _context35.n = 6;
+                                return this.print(device, this.buildDorso());
+
+                              case 6:
+                                return _context35.a(2);
+
+                              case 7:
                                 this.handleMultimedia(); // if (this.boleto.id != -1) 
                                 //   this.modalCtrl.dismiss();
                                 // this.navCtrl.navigateRoot('/');
 
-                              case 5:
+                              case 8:
                                 return _context35.a(2);
                             }
                           }, _callee35, this, [[1, 3]]);
@@ -4618,32 +4642,88 @@
                 }
               }, _callee38, this);
             }));
+          } // El dorso se imprime en una segunda pasada: el operador voltea el boleto
+          // y lo vuelve a meter en la impresora.
+
+        }, {
+          key: "preguntarDorso",
+          value: function preguntarDorso() {
+            var _this26 = this;
+
+            return new Promise(function (resolve) {
+              return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(_this26, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee39() {
+                var alert;
+                return _regenerator().w(function (_context39) {
+                  while (1) switch (_context39.n) {
+                    case 0:
+                      _context39.n = 1;
+                      return this.alertCtrl.create({
+                        header: 'Reverso del boleto',
+                        message: 'Voltee el boleto y vuelva a meterlo en la impresora para imprimir la advertencia del dorso.',
+                        backdropDismiss: false,
+                        buttons: [{
+                          text: 'Omitir',
+                          role: 'cancel',
+                          handler: function handler() {
+                            return resolve(false);
+                          }
+                        }, {
+                          text: 'Imprimir dorso',
+                          handler: function handler() {
+                            return resolve(true);
+                          }
+                        }]
+                      });
+
+                    case 1:
+                      alert = _context39.v;
+                      _context39.n = 2;
+                      return alert.present();
+
+                    case 2:
+                      return _context39.a(2);
+                  }
+                }, _callee39, this);
+              }));
+            });
+          }
+        }, {
+          key: "buildDorso",
+          value: function buildDorso() {
+            var encoder = new esc_pos_encoder__WEBPACK_IMPORTED_MODULE_11___default.a();
+            var result = encoder.initialize();
+            result.raw([0x1c, 0x2e]);
+            result.raw([0x1b, 0x74, 0x10]);
+            result._codepage = 'windows1252';
+            var hr = this.util.commands.HORIZONTAL_LINE.HR_58MM;
+            result.align('center').raw([0x1B, 0x21, 0x03]).size('normal').line(hr).bold(true).line('ADVERTENCIA').bold(false).align('left').line('Revise su boleto; no aceptamos').line('reclamos después del sorteo.').newline().line('El trabajador no es un robot y').line('puede cometer errores, pero').line('recuerde que es su dinero.').newline().line('No nos hacemos responsables').line('después del sorteo.').align('center').line(hr).newline().newline().cut('partial');
+            return result.encode();
           }
         }, {
           key: "reset",
           value: function reset() {
-            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee39() {
-              var _this26 = this;
+            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee40() {
+              var _this27 = this;
 
-              return _regenerator().w(function (_context39) {
-                while (1) switch (_context39.n) {
+              return _regenerator().w(function (_context40) {
+                while (1) switch (_context40.n) {
                   case 0:
                     if (!(this.boleto.id != -1)) {
-                      _context39.n = 1;
+                      _context40.n = 1;
                       break;
                     }
 
-                    return _context39.a(2);
+                    return _context40.a(2);
 
                   case 1:
                     this.ngZone.run(function () {
-                      _this26.esCopia = false;
-                      _this26.boleto.cliente_nombre = '';
-                      _this26.boleto.numeros = [];
-                      _this26.boleto.id = -1;
-                      _this26.boleto_id = -1;
-                      _this26.boleto.total = 0;
-                      _this26.date = ''; // let j = new Juego(this.boleto.juego);
+                      _this27.esCopia = false;
+                      _this27.boleto.cliente_nombre = '';
+                      _this27.boleto.numeros = [];
+                      _this27.boleto.id = -1;
+                      _this27.boleto_id = -1;
+                      _this27.boleto.total = 0;
+                      _this27.date = ''; // let j = new Juego(this.boleto.juego);
                       // let ei = this.boleto.empleado_id;
                       // let en = this.boleto.empleado_nombre;
                       // let ji = this.boleto.juego_id;
@@ -4655,35 +4735,35 @@
                       // this.boleto.empleado_id = ei;
                       // this.boleto.empleado_nombre = en;
 
-                      _this26.isSending = false;
+                      _this27.isSending = false;
 
-                      _this26.getNext();
+                      _this27.getNext();
                     });
 
                   case 2:
-                    return _context39.a(2);
+                    return _context40.a(2);
                 }
-              }, _callee39, this);
+              }, _callee40, this);
             }));
           }
         }, {
           key: "prepareToSMS",
           value: function prepareToSMS() {
-            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee42() {
-              var _this27 = this;
+            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee43() {
+              var _this28 = this;
 
-              return _regenerator().w(function (_context42) {
-                while (1) switch (_context42.n) {
+              return _regenerator().w(function (_context43) {
+                while (1) switch (_context43.n) {
                   case 0:
-                    return _context42.a(2, new Promise(function (resolve, reject) {
-                      return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(_this27, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee41() {
-                        var _this28 = this;
+                    return _context43.a(2, new Promise(function (resolve, reject) {
+                      return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(_this28, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee42() {
+                        var _this29 = this;
 
                         var alert;
-                        return _regenerator().w(function (_context41) {
-                          while (1) switch (_context41.n) {
+                        return _regenerator().w(function (_context42) {
+                          while (1) switch (_context42.n) {
                             case 0:
-                              _context41.n = 1;
+                              _context42.n = 1;
                               return this.alertCtrl.create({
                                 header: "Boleto #" + this.boleto_id,
                                 subHeader: 'Celular',
@@ -4698,10 +4778,10 @@
                                   role: 'cancel',
                                   cssClass: 'danger',
                                   handler: function handler() {
-                                    if (!_this28.sendWhatsapp) {
-                                      _this28.util.presentToast('No se pudo enviar el sms, se enviará el boleto por whatsapp', 1200);
+                                    if (!_this29.sendWhatsapp) {
+                                      _this29.util.presentToast('No se pudo enviar el sms, se enviará el boleto por whatsapp', 1200);
 
-                                      _this28.whatsApp();
+                                      _this29.whatsApp();
                                     }
 
                                     resolve('');
@@ -4709,21 +4789,21 @@
                                 }, {
                                   text: 'Enviar',
                                   handler: function handler(e) {
-                                    return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(_this28, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee40() {
+                                    return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(_this29, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee41() {
                                       var numero, emp, _t0;
 
-                                      return _regenerator().w(function (_context40) {
-                                        while (1) switch (_context40.p = _context40.n) {
+                                      return _regenerator().w(function (_context41) {
+                                        while (1) switch (_context41.p = _context41.n) {
                                           case 0:
                                             console.log('Confirm Ok');
                                             console.log(e);
                                             numero = e.numero;
-                                            _context40.p = 1;
-                                            _context40.n = 2;
+                                            _context41.p = 1;
+                                            _context41.n = 2;
                                             return this.bs.getEmpleado();
 
                                           case 2:
-                                            emp = _context40.v;
+                                            emp = _context41.v;
                                             this.sms.send('+505 ' + numero, (emp.usuario.factura_nombre ? emp.usuario.factura_nombre + "\n".concat(this.HR, "\n") : '') + "Boleto:  #" + this.boleto_id + '\n' + 'Fecha:   ' + moment__WEBPACK_IMPORTED_MODULE_7___default()(this.boleto.juego_fecha).format('DD/MM/YYYY') + '\n' + 'Sorteo:  ' + this.getSorteoNombre() + '\n' + (!this.boleto.cliente_nombre || emp.usuario.tipo_factura == 2 && this.boleto.cliente_nombre.toLowerCase() == 'cliente de contado' ? '' : (emp.usuario.tipo_factura == 1 ? 'Cliente' : 'Apostador') + ': ' + this.boleto.cliente_nombre + '\n') + "".concat(this.HR, "\n") + (this.empleado.usuario.tipo_factura == 1 ? 'Números comprados\n\n' : '\n') + this.boleto.numeros.map(function (x) {
                                               return x.numero + ' con: ' + x.inversion + ' = ' + x.ganancia + '\n';
                                             }).join('\n') + '\n' + "".concat(this.HR, "\n") + 'Total: ' + this.currencyPipe.transform(this.boleto.numeros.sumBy(function (x) {
@@ -4736,39 +4816,39 @@
                                               return console.log('err', err);
                                             }); // window.alert('GOOD');
 
-                                            _context40.n = 4;
+                                            _context41.n = 4;
                                             break;
 
                                           case 3:
-                                            _context40.p = 3;
-                                            _t0 = _context40.v;
+                                            _context41.p = 3;
+                                            _t0 = _context41.v;
 
                                           case 4:
                                             if (!this.sendWhatsapp) this.reset();
                                             resolve('');
 
                                           case 5:
-                                            return _context40.a(2);
+                                            return _context41.a(2);
                                         }
-                                      }, _callee40, this, [[1, 3]]);
+                                      }, _callee41, this, [[1, 3]]);
                                     }));
                                   }
                                 }]
                               });
 
                             case 1:
-                              alert = _context41.v;
-                              _context41.n = 2;
+                              alert = _context42.v;
+                              _context42.n = 2;
                               return alert.present();
 
                             case 2:
-                              return _context41.a(2);
+                              return _context42.a(2);
                           }
-                        }, _callee41, this);
+                        }, _callee42, this);
                       }));
                     }));
                 }
-              }, _callee42);
+              }, _callee43);
             }));
           }
         }, {
@@ -4776,10 +4856,10 @@
           value: function prepareToPrint() {
             var _a;
 
-            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee43() {
+            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee44() {
               var getSpaces, encoder, result, line, now, img2, i, d, n, inv0, inv, gan0, gan;
-              return _regenerator().w(function (_context43) {
-                while (1) switch (_context43.n) {
+              return _regenerator().w(function (_context44) {
+                while (1) switch (_context44.n) {
                   case 0:
                     /*
                         let receipt = '';
@@ -4800,6 +4880,8 @@
                         receipt += commands.EOL;
                         receipt += commands.EOL;*/
                     //this.receipt = receipt;
+                    this.dorsoPendiente = true;
+
                     getSpaces = function getSpaces(n) {
                       var x = '';
 
@@ -4822,7 +4904,7 @@
                     now = new Date();
                     img2 = new Image();
                     img2.src = this.logo;
-                    _context43.n = 1;
+                    _context44.n = 1;
                     return new Promise(function (resolve, reject) {
                       return img2.onload = function () {
                         return resolve('');
@@ -4945,36 +5027,33 @@
                     // .barcode(this.boleto_id + '_' + this.boleto.juego_id, 'code128' as any, 60)
 
 
-                    result.barcode(this.boleto.scan_code, 'code128', 60).newline().newline().newline(); // Reverso del boleto: aviso fijo, sale siempre en la misma
-                    // impresion que el frente (todo de una sola vez).
-
-                    result.align('center').raw([0x1B, 0x21, 0x03]).size('normal').line(line).bold(true).line('ADVERTENCIA').bold(false).align('left').line('Revise su boleto; no aceptamos').line('reclamos después del sorteo.').newline().line('El trabajador no es un robot y').line('puede cometer errores, pero').line('recuerde que es su dinero.').newline().line('No nos hacemos responsables').line('después del sorteo.').align('center').line(line).newline().newline();
-                    result.cut('partial'); // .cut();
+                    result.barcode(this.boleto.scan_code, 'code128', 60).newline().newline().newline().cut('partial'); // .cut();
+                    // .cut();
                     // .qrcode(qr, 1, 8, 'h')
 
                     this.mountAlertBt(result.encode());
 
                   case 2:
-                    return _context43.a(2);
+                    return _context44.a(2);
                 }
-              }, _callee43, this);
+              }, _callee44, this);
             }));
           } // now = () => momentTZ().tz('America/Managua').format('DD/MM/YYYY hh:mm:ss A');
 
         }, {
           key: "searchBluetooth",
           value: function searchBluetooth() {
-            var _this29 = this;
+            var _this30 = this;
 
             this.printer.enableBluetooth().then(function () {
-              _this29.printer.searchBluetooth().then(function (devices) {
-                return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(_this29, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee45() {
-                  var _this30 = this;
+              _this30.printer.searchBluetooth().then(function (devices) {
+                return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(_this30, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee46() {
+                  var _this31 = this;
 
                   var inputs, _alert4;
 
-                  return _regenerator().w(function (_context45) {
-                    while (1) switch (_context45.n) {
+                  return _regenerator().w(function (_context46) {
+                    while (1) switch (_context46.n) {
                       case 0:
                         inputs = [];
                         devices.forEach(function (d) {
@@ -4983,24 +5062,24 @@
                             value: d.address,
                             label: d.name,
                             type: 'radio',
-                            checked: _this30.util.IMPRESORA_ADDRESS == d.address
+                            checked: _this31.util.IMPRESORA_ADDRESS == d.address
                           });
                         });
 
                         if (!(inputs.length == 0)) {
-                          _context45.n = 2;
+                          _context46.n = 2;
                           break;
                         }
 
-                        _context45.n = 1;
+                        _context46.n = 1;
                         return this.util.presentAlert('Aviso', 'No hay ningún dispositivo vinculado a este celular.');
 
                       case 1:
-                        _context45.n = 4;
+                        _context46.n = 4;
                         break;
 
                       case 2:
-                        _context45.n = 3;
+                        _context46.n = 3;
                         return this.alertCtrl.create({
                           header: 'Seleccione la impresora',
                           inputs: inputs,
@@ -5011,73 +5090,73 @@
                             text: 'Seleccionar',
                             role: 'ok',
                             handler: function handler(device) {
-                              return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(_this30, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee44() {
+                              return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(_this31, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee45() {
                                 var toast;
-                                return _regenerator().w(function (_context44) {
-                                  while (1) switch (_context44.n) {
+                                return _regenerator().w(function (_context45) {
+                                  while (1) switch (_context45.n) {
                                     case 0:
                                       if (!device) {
-                                        _context44.n = 3;
+                                        _context45.n = 3;
                                         break;
                                       }
 
-                                      _context44.n = 1;
+                                      _context45.n = 1;
                                       return this.storage.set('impresora_address', device);
 
                                     case 1:
                                       this.util.IMPRESORA_ADDRESS = device;
-                                      _context44.n = 2;
+                                      _context45.n = 2;
                                       return this.toastCtrl.create({
                                         message: 'Se configuró la impresora con éxito.',
                                         duration: 1500
                                       });
 
                                     case 2:
-                                      toast = _context44.v;
-                                      _context44.n = 3;
+                                      toast = _context45.v;
+                                      _context45.n = 3;
                                       return toast.present();
 
                                     case 3:
-                                      return _context44.a(2);
+                                      return _context45.a(2);
                                   }
-                                }, _callee44, this);
+                                }, _callee45, this);
                               }));
                             }
                           }]
                         });
 
                       case 3:
-                        _alert4 = _context45.v;
-                        _context45.n = 4;
+                        _alert4 = _context46.v;
+                        _context46.n = 4;
                         return _alert4.present();
 
                       case 4:
-                        return _context45.a(2);
+                        return _context46.a(2);
                     }
-                  }, _callee45, this);
+                  }, _callee46, this);
                 }));
               })["catch"](function (err) {
-                return _this29.util.presentAlert('Error', 'Se produjo un error al buscar los dispositivos.');
+                return _this30.util.presentAlert('Error', 'Se produjo un error al buscar los dispositivos.');
               });
             })["catch"](function (err) {
-              _this29.util.presentAlert('Error', 'Se produjo un error al activar el bluetooth.');
+              _this30.util.presentAlert('Error', 'Se produjo un error al activar el bluetooth.');
             });
           }
         }, {
           key: "mountAlertBt",
           value: function mountAlertBt(data) {
-            var _this31 = this;
+            var _this32 = this;
 
             this.printer.enableBluetooth().then(function () {
-              if (_this31.util.IMPRESORA_ADDRESS == '') {
-                _this31.printer.searchBluetooth().then(function (devices) {
-                  return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(_this31, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee47() {
-                    var _this32 = this;
+              if (_this32.util.IMPRESORA_ADDRESS == '') {
+                _this32.printer.searchBluetooth().then(function (devices) {
+                  return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(_this32, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee48() {
+                    var _this33 = this;
 
                     var inputs, _alert5;
 
-                    return _regenerator().w(function (_context47) {
-                      while (1) switch (_context47.n) {
+                    return _regenerator().w(function (_context48) {
+                      while (1) switch (_context48.n) {
                         case 0:
                           inputs = [];
                           devices.forEach(function (d) {
@@ -5090,16 +5169,16 @@
                           });
 
                           if (!(inputs.length == 0)) {
-                            _context47.n = 1;
+                            _context48.n = 1;
                             break;
                           }
 
                           this.whatsApp();
-                          _context47.n = 3;
+                          _context48.n = 3;
                           break;
 
                         case 1:
-                          _context47.n = 2;
+                          _context48.n = 2;
                           return this.alertCtrl.create({
                             header: 'Seleccione la impresora',
                             inputs: inputs,
@@ -5107,58 +5186,58 @@
                               text: 'Cancelar',
                               role: 'cancel',
                               handler: function handler() {
-                                return _this32.whatsApp();
+                                return _this33.whatsApp();
                               }
                             }, {
                               text: 'Seleccionar',
                               role: 'ok',
                               handler: function handler(device) {
-                                return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(_this32, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee46() {
-                                  return _regenerator().w(function (_context46) {
-                                    while (1) switch (_context46.n) {
+                                return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(_this33, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee47() {
+                                  return _regenerator().w(function (_context47) {
+                                    while (1) switch (_context47.n) {
                                       case 0:
                                         if (!device) {
-                                          _context46.n = 2;
+                                          _context47.n = 2;
                                           break;
                                         }
 
-                                        _context46.n = 1;
+                                        _context47.n = 1;
                                         return this.storage.set('impresora_address', device);
 
                                       case 1:
                                         this.util.IMPRESORA_ADDRESS = device;
                                         this.print(device, data);
-                                        _context46.n = 3;
+                                        _context47.n = 3;
                                         break;
 
                                       case 2:
                                         this.whatsApp();
 
                                       case 3:
-                                        return _context46.a(2);
+                                        return _context47.a(2);
                                     }
-                                  }, _callee46, this);
+                                  }, _callee47, this);
                                 }));
                               }
                             }]
                           });
 
                         case 2:
-                          _alert5 = _context47.v;
-                          _context47.n = 3;
+                          _alert5 = _context48.v;
+                          _context48.n = 3;
                           return _alert5.present();
 
                         case 3:
-                          return _context47.a(2);
+                          return _context48.a(2);
                       }
-                    }, _callee47, this);
+                    }, _callee48, this);
                   }));
                 })["catch"](function (error) {
-                  return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(_this31, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee48() {
-                    return _regenerator().w(function (_context48) {
-                      while (1) switch (_context48.n) {
+                  return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(_this32, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee49() {
+                    return _regenerator().w(function (_context49) {
+                      while (1) switch (_context49.n) {
                         case 0:
-                          _context48.n = 1;
+                          _context49.n = 1;
                           return this.util.presentAlert('Error', 'Error al conectar con la impresora.');
 
                         case 1:
@@ -5169,29 +5248,29 @@
                           // this.mountAlertBt(this.receipt);
 
                         case 2:
-                          return _context48.a(2);
+                          return _context49.a(2);
                       }
-                    }, _callee48, this);
+                    }, _callee49, this);
                   }));
                 });
               } else {
-                _this31.print(_this31.util.IMPRESORA_ADDRESS, data);
+                _this32.print(_this32.util.IMPRESORA_ADDRESS, data);
               }
             })["catch"](function (error) {
-              return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(_this31, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee49() {
-                return _regenerator().w(function (_context49) {
-                  while (1) switch (_context49.n) {
+              return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(_this32, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee50() {
+                return _regenerator().w(function (_context50) {
+                  while (1) switch (_context50.n) {
                     case 0:
-                      _context49.n = 1;
+                      _context50.n = 1;
                       return this.util.presentAlert('Error', 'Error al conectar con la impresora se enviará el boleto por whatsapp');
 
                     case 1:
                       this.whatsApp();
 
                     case 2:
-                      return _context49.a(2);
+                      return _context50.a(2);
                   }
-                }, _callee49, this);
+                }, _callee50, this);
               }));
             });
           }
@@ -5218,12 +5297,12 @@
         }, {
           key: "whatsApp",
           value: function whatsApp() {
-            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee51() {
-              var _this33 = this;
+            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee52() {
+              var _this34 = this;
 
               var r;
-              return _regenerator().w(function (_context51) {
-                while (1) switch (_context51.n) {
+              return _regenerator().w(function (_context52) {
+                while (1) switch (_context52.n) {
                   case 0:
                     r = document.getElementById('receipt'); // console.log(r);
                     // r.remove();
@@ -5240,34 +5319,34 @@
                           r.style.transform = "translateX(-50%) scale(0.5, 0.5)";
                           console.log(d);
 
-                          _this33.socialSharing.share('Boleto #' + _this33.boleto_id, '', d).then(function () {
-                            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(_this33, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee50() {
-                              return _regenerator().w(function (_context50) {
-                                while (1) switch (_context50.n) {
+                          _this34.socialSharing.share('Boleto #' + _this34.boleto_id, '', d).then(function () {
+                            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(_this34, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee51() {
+                              return _regenerator().w(function (_context51) {
+                                while (1) switch (_context51.n) {
                                   case 0:
                                     // alert('Todo bien');
                                     this.reset();
 
                                   case 1:
-                                    return _context50.a(2);
+                                    return _context51.a(2);
                                 }
-                              }, _callee50, this);
+                              }, _callee51, this);
                             }));
                           })["catch"](function (err) {
-                            _this33.util.handleError(err.message ? err : {
+                            _this34.util.handleError(err.message ? err : {
                               message: err
                             });
 
-                            _this33.reset();
+                            _this34.reset();
                           });
                         }, 100);
                       });
                     }, 100);
 
                   case 1:
-                    return _context51.a(2);
+                    return _context52.a(2);
                 }
-              }, _callee51, this);
+              }, _callee52, this);
             }));
           }
         }, {
@@ -5285,17 +5364,17 @@
         }, {
           key: "toggle",
           value: function toggle() {
-            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee52() {
-              return _regenerator().w(function (_context52) {
-                while (1) switch (_context52.n) {
+            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee53() {
+              return _regenerator().w(function (_context53) {
+                while (1) switch (_context53.n) {
                   case 0:
                     this.isOpen = !this.isOpen;
                     console.log('HERE');
 
                   case 1:
-                    return _context52.a(2);
+                    return _context53.a(2);
                 }
-              }, _callee52, this);
+              }, _callee53, this);
             }));
           }
         }, {
@@ -5396,14 +5475,14 @@
         }, {
           key: "handleNoOption",
           value: function handleNoOption() {
-            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee53() {
-              var _this34 = this;
+            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee54() {
+              var _this35 = this;
 
               var alert;
-              return _regenerator().w(function (_context53) {
-                while (1) switch (_context53.n) {
+              return _regenerator().w(function (_context54) {
+                while (1) switch (_context54.n) {
                   case 0:
-                    _context53.n = 1;
+                    _context54.n = 1;
                     return this.alertCtrl.create({
                       header: "Opci\xF3n de envio",
                       message: "Por favor selecciona una opci\xF3n para enviar/imprimir el boleto",
@@ -5411,29 +5490,29 @@
                       buttons: [{
                         text: 'Impresora',
                         handler: function handler() {
-                          return _this34.prepareToPrint();
+                          return _this35.prepareToPrint();
                         }
                       }, {
                         text: 'Whatasapp',
                         handler: function handler() {
-                          return _this34.whatsApp();
+                          return _this35.whatsApp();
                         }
                       }, {
                         text: 'SMS',
                         handler: function handler() {
-                          return _this34.prepareToSMS();
+                          return _this35.prepareToSMS();
                         }
                       }]
                     });
 
                   case 1:
-                    alert = _context53.v;
+                    alert = _context54.v;
                     alert.present();
 
                   case 2:
-                    return _context53.a(2);
+                    return _context54.a(2);
                 }
-              }, _callee53, this);
+              }, _callee54, this);
             }));
           }
         }]);
@@ -5616,36 +5695,36 @@
         return _createClass(VentasFiltroPage, [{
           key: "getAll",
           value: function getAll() {
-            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee54() {
-              var _this35 = this;
+            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee55() {
+              var _this36 = this;
 
               var emp, ex, _t1;
 
-              return _regenerator().w(function (_context54) {
-                while (1) switch (_context54.p = _context54.n) {
+              return _regenerator().w(function (_context55) {
+                while (1) switch (_context55.p = _context55.n) {
                   case 0:
-                    _context54.p = 0;
-                    _context54.n = 1;
+                    _context55.p = 0;
+                    _context55.n = 1;
                     return this.bs.getEmpleado();
 
                   case 1:
-                    emp = _context54.v;
+                    emp = _context55.v;
                     // if (!emp.usuario.isadmin) return;
                     this.isAdmin = emp.usuario.isadmin;
-                    _context54.n = 2;
+                    _context55.n = 2;
                     return this.bs.get(this.bs.EMPLEADO_URL + "/supervisores", true);
 
                   case 2:
-                    this.empleados = _context54.v;
+                    this.empleados = _context55.v;
                     if (this.empleados.length > 0) this.empleado = this.empleados.find(function (x) {
-                      return x.id == _this35.empleado.id;
+                      return x.id == _this36.empleado.id;
                     }) || {
                       id: -1,
                       nombre: ''
                     };
 
                     if (this.isAdmin) {
-                      _context54.n = 3;
+                      _context55.n = 3;
                       break;
                     }
 
@@ -5659,17 +5738,17 @@
                       return x.nombre.localeCompare(y.nombre);
                     });
                     this.agente = this.agentes.find(function (x) {
-                      return x.id == _this35.agente.id;
+                      return x.id == _this36.agente.id;
                     }) || {
                       id: -1,
                       nombre: ''
                     };
-                    return _context54.a(2);
+                    return _context55.a(2);
 
                   case 3:
                     ;
                     this.bs.get(this.bs.EMPLEADO_URL, true).then(function (e) {
-                      _this35.agentes = e.map(function (x) {
+                      _this36.agentes = e.map(function (x) {
                         return {
                           id: x.id,
                           nombre: x.primer_nombre + ' ' + x.primer_apellido
@@ -5677,26 +5756,26 @@
                       }).sort(function (x, y) {
                         return x.nombre.localeCompare(y.nombre);
                       });
-                      _this35.agente = _this35.agentes.find(function (x) {
-                        return x.id == _this35.agente.id;
+                      _this36.agente = _this36.agentes.find(function (x) {
+                        return x.id == _this36.agente.id;
                       }) || {
                         id: -1,
                         nombre: ''
                       };
                     });
-                    _context54.n = 5;
+                    _context55.n = 5;
                     break;
 
                   case 4:
-                    _context54.p = 4;
-                    _t1 = _context54.v;
+                    _context55.p = 4;
+                    _t1 = _context55.v;
                     ex = _t1;
                     this.util.handleError(_t1);
 
                   case 5:
-                    return _context54.a(2);
+                    return _context55.a(2);
                 }
-              }, _callee54, this, [[0, 4]]);
+              }, _callee55, this, [[0, 4]]);
             }));
           }
         }, {
@@ -5888,10 +5967,10 @@
         }, {
           key: "todosClicked",
           value: function todosClicked(evt) {
-            var _this36 = this;
+            var _this37 = this;
 
             this.numeros_restringidos.map(function (x) {
-              return x.cantidad = _this36.cantidad;
+              return x.cantidad = _this37.cantidad;
             });
             this.cantidad = null;
           }
@@ -6229,11 +6308,11 @@
         }, {
           key: "getHeaders",
           value: function getHeaders(nToken) {
-            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee55() {
+            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee56() {
               var headers, _t10;
 
-              return _regenerator().w(function (_context55) {
-                while (1) switch (_context55.n) {
+              return _regenerator().w(function (_context56) {
+                while (1) switch (_context56.n) {
                   case 0:
                     headers = {
                       "Content-Type": "application/x-www-form-urlencoded",
@@ -6244,18 +6323,18 @@
                     };
 
                     if (!nToken) {
-                      _context55.n = 3;
+                      _context56.n = 3;
                       break;
                     }
 
-                    _context55.n = 1;
+                    _context56.n = 1;
                     return this.storage.get('token');
 
                   case 1:
-                    _t10 = _context55.v;
+                    _t10 = _context56.v;
 
                     if (_t10) {
-                      _context55.n = 2;
+                      _context56.n = 2;
                       break;
                     }
 
@@ -6265,9 +6344,9 @@
                     headers.Authorization = _t10;
 
                   case 3:
-                    return _context55.a(2, headers);
+                    return _context56.a(2, headers);
                 }
-              }, _callee55, this);
+              }, _callee56, this);
             }));
           } // async post<T>(url: string, body, nToken: boolean = false): Promise<T>
           // {
@@ -6333,38 +6412,38 @@
           key: "getEmpleado",
           value: function getEmpleado() {
             var forced = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
-            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee56() {
+            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee57() {
               var _t11;
 
-              return _regenerator().w(function (_context56) {
-                while (1) switch (_context56.p = _context56.n) {
+              return _regenerator().w(function (_context57) {
+                while (1) switch (_context57.p = _context57.n) {
                   case 0:
                     if (!(this.empleado.id != -1 && !forced)) {
-                      _context56.n = 1;
+                      _context57.n = 1;
                       break;
                     }
 
-                    return _context56.a(2, this.empleado);
+                    return _context57.a(2, this.empleado);
 
                   case 1:
-                    _context56.p = 1;
-                    _context56.n = 2;
+                    _context57.p = 1;
+                    _context57.n = 2;
                     return this.get(this.MY_PROFILE_URL, true);
 
                   case 2:
-                    this.empleado = _context56.v;
-                    _context56.n = 4;
+                    this.empleado = _context57.v;
+                    _context57.n = 4;
                     break;
 
                   case 3:
-                    _context56.p = 3;
-                    _t11 = _context56.v;
+                    _context57.p = 3;
+                    _t11 = _context57.v;
                     throw _t11;
 
                   case 4:
-                    return _context56.a(2, this.empleado);
+                    return _context57.a(2, this.empleado);
                 }
-              }, _callee56, this, [[1, 3]]);
+              }, _callee57, this, [[1, 3]]);
             }));
           }
         }, {
@@ -6376,10 +6455,10 @@
         }, {
           key: "getNativeHeader",
           value: function getNativeHeader(nToken) {
-            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee57() {
+            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee58() {
               var headers, token;
-              return _regenerator().w(function (_context57) {
-                while (1) switch (_context57.n) {
+              return _regenerator().w(function (_context58) {
+                while (1) switch (_context58.n) {
                   case 0:
                     headers = {
                       "Content-Type": "application/x-www-form-urlencoded",
@@ -6388,47 +6467,6 @@
                       'Pragma': 'no-cache',
                       'APP_VERSION': src_environments_environment_prod__WEBPACK_IMPORTED_MODULE_8__["environment"].APP_VERSION
                     };
-
-                    if (!nToken) {
-                      _context57.n = 3;
-                      break;
-                    }
-
-                    _context57.n = 1;
-                    return this.storage.get('token');
-
-                  case 1:
-                    token = _context57.v;
-
-                    if (token) {
-                      _context57.n = 2;
-                      break;
-                    }
-
-                    throw {
-                      status: 401,
-                      message: 'Tu sesión no es válida o expiró. Inicia sesión de nuevo.'
-                    };
-
-                  case 2:
-                    headers.Authorization = token;
-
-                  case 3:
-                    return _context57.a(2, headers);
-                }
-              }, _callee57, this);
-            }));
-          }
-        }, {
-          key: "getBrowserHeader",
-          value: function getBrowserHeader(nToken) {
-            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee58() {
-              var headers, token;
-              return _regenerator().w(function (_context58) {
-                while (1) switch (_context58.n) {
-                  case 0:
-                    headers = new _angular_common_http__WEBPACK_IMPORTED_MODULE_2__["HttpHeaders"]();
-                    headers = headers.append("Content-Type", "application/x-www-form-urlencoded").append('APP_VERSION', src_environments_environment_prod__WEBPACK_IMPORTED_MODULE_8__["environment"].APP_VERSION);
 
                     if (!nToken) {
                       _context58.n = 3;
@@ -6452,12 +6490,53 @@
                     };
 
                   case 2:
-                    headers = headers.append('Authorization', token);
+                    headers.Authorization = token;
 
                   case 3:
                     return _context58.a(2, headers);
                 }
               }, _callee58, this);
+            }));
+          }
+        }, {
+          key: "getBrowserHeader",
+          value: function getBrowserHeader(nToken) {
+            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee59() {
+              var headers, token;
+              return _regenerator().w(function (_context59) {
+                while (1) switch (_context59.n) {
+                  case 0:
+                    headers = new _angular_common_http__WEBPACK_IMPORTED_MODULE_2__["HttpHeaders"]();
+                    headers = headers.append("Content-Type", "application/x-www-form-urlencoded").append('APP_VERSION', src_environments_environment_prod__WEBPACK_IMPORTED_MODULE_8__["environment"].APP_VERSION);
+
+                    if (!nToken) {
+                      _context59.n = 3;
+                      break;
+                    }
+
+                    _context59.n = 1;
+                    return this.storage.get('token');
+
+                  case 1:
+                    token = _context59.v;
+
+                    if (token) {
+                      _context59.n = 2;
+                      break;
+                    }
+
+                    throw {
+                      status: 401,
+                      message: 'Tu sesión no es válida o expiró. Inicia sesión de nuevo.'
+                    };
+
+                  case 2:
+                    headers = headers.append('Authorization', token);
+
+                  case 3:
+                    return _context59.a(2, headers);
+                }
+              }, _callee59, this);
             }));
           } // POST
 
@@ -6465,130 +6544,130 @@
           key: "post",
           value: function post(url, body) {
             var nToken = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
-            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee59() {
+            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee60() {
               var _t12, _t13, _t14, _t15, _t16, _t17, _t18;
 
-              return _regenerator().w(function (_context59) {
-                while (1) switch (_context59.n) {
+              return _regenerator().w(function (_context60) {
+                while (1) switch (_context60.n) {
                   case 0:
                     if (!this.isDesktop()) {
-                      _context59.n = 2;
+                      _context60.n = 2;
                       break;
                     }
 
                     _t13 = this;
                     _t14 = url;
                     _t15 = body;
-                    _context59.n = 1;
+                    _context60.n = 1;
                     return this.getBrowserHeader(nToken);
 
                   case 1:
-                    _t12 = _t13.browserPost.call(_t13, _t14, _t15, _context59.v);
-                    _context59.n = 4;
+                    _t12 = _t13.browserPost.call(_t13, _t14, _t15, _context60.v);
+                    _context60.n = 4;
                     break;
 
                   case 2:
                     _t16 = this;
                     _t17 = url;
                     _t18 = body;
-                    _context59.n = 3;
+                    _context60.n = 3;
                     return this.getNativeHeader(nToken);
 
                   case 3:
-                    _t12 = _t16.nativePost.call(_t16, _t17, _t18, _context59.v);
+                    _t12 = _t16.nativePost.call(_t16, _t17, _t18, _context60.v);
 
                   case 4:
-                    return _context59.a(2, _t12);
+                    return _context60.a(2, _t12);
                 }
-              }, _callee59, this);
+              }, _callee60, this);
             }));
           } // Heartbeat: avisa al servidor que este usuario sigue en la aplicacion
 
         }, {
           key: "presencia",
           value: function presencia() {
-            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee60() {
-              var _t19;
-
-              return _regenerator().w(function (_context60) {
-                while (1) switch (_context60.p = _context60.n) {
-                  case 0:
-                    _context60.p = 0;
-                    _context60.n = 1;
-                    return this.post(this.PRESENCIA_URL, {}, true);
-
-                  case 1:
-                    return _context60.a(2, _context60.v);
-
-                  case 2:
-                    _context60.p = 2;
-                    _t19 = _context60.v;
-                    return _context60.a(2, null);
-                }
-              }, _callee60, this, [[0, 2]]);
-            }));
-          }
-        }, {
-          key: "nativePost",
-          value: function nativePost(url, body, headers) {
             return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee61() {
-              var x, _t20;
+              var _t19;
 
               return _regenerator().w(function (_context61) {
                 while (1) switch (_context61.p = _context61.n) {
                   case 0:
                     _context61.p = 0;
                     _context61.n = 1;
-                    return this.httpNative.setServerTrustMode('nocheck');
+                    return this.post(this.PRESENCIA_URL, {}, true);
 
                   case 1:
-                    _context61.n = 2;
-                    return this.withTimeout(this.httpNative.post(url, body, headers), this.TIMEOUT_WRITE);
+                    return _context61.a(2, _context61.v);
 
                   case 2:
-                    x = _context61.v;
-                    _context61.n = 4;
-                    break;
-
-                  case 3:
-                    _context61.p = 3;
-                    _t20 = _context61.v;
-                    throw this.normalizeError(_t20, true);
-
-                  case 4:
-                    return _context61.a(2, this.parseNative(x));
+                    _context61.p = 2;
+                    _t19 = _context61.v;
+                    return _context61.a(2, null);
                 }
-              }, _callee61, this, [[0, 3]]);
+              }, _callee61, this, [[0, 2]]);
             }));
           }
         }, {
-          key: "browserPost",
-          value: function browserPost(url, body, headers) {
+          key: "nativePost",
+          value: function nativePost(url, body, headers) {
             return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee62() {
-              var _t21;
+              var x, _t20;
 
               return _regenerator().w(function (_context62) {
                 while (1) switch (_context62.p = _context62.n) {
                   case 0:
                     _context62.p = 0;
                     _context62.n = 1;
+                    return this.httpNative.setServerTrustMode('nocheck');
+
+                  case 1:
+                    _context62.n = 2;
+                    return this.withTimeout(this.httpNative.post(url, body, headers), this.TIMEOUT_WRITE);
+
+                  case 2:
+                    x = _context62.v;
+                    _context62.n = 4;
+                    break;
+
+                  case 3:
+                    _context62.p = 3;
+                    _t20 = _context62.v;
+                    throw this.normalizeError(_t20, true);
+
+                  case 4:
+                    return _context62.a(2, this.parseNative(x));
+                }
+              }, _callee62, this, [[0, 3]]);
+            }));
+          }
+        }, {
+          key: "browserPost",
+          value: function browserPost(url, body, headers) {
+            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee63() {
+              var _t21;
+
+              return _regenerator().w(function (_context63) {
+                while (1) switch (_context63.p = _context63.n) {
+                  case 0:
+                    _context63.p = 0;
+                    _context63.n = 1;
                     return this.http.post(url, this.formData(body), {
                       headers: headers
                     }).pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_9__["timeout"])(this.TIMEOUT_WRITE)).toPromise();
 
                   case 1:
-                    return _context62.a(2, _context62.v);
+                    return _context63.a(2, _context63.v);
 
                   case 2:
-                    _context62.p = 2;
-                    _t21 = _context62.v;
+                    _context63.p = 2;
+                    _t21 = _context63.v;
                     console.log('POST error', url, _t21);
                     throw this.normalizeError(_t21, true);
 
                   case 3:
-                    return _context62.a(2);
+                    return _context63.a(2);
                 }
-              }, _callee62, this, [[0, 2]]);
+              }, _callee63, this, [[0, 2]]);
             }));
           } // GET
 
@@ -6596,118 +6675,118 @@
           key: "get",
           value: function get(url) {
             var nToken = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
-            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee63() {
+            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee64() {
               var _t22, _t23, _t24, _t25, _t26;
 
-              return _regenerator().w(function (_context63) {
-                while (1) switch (_context63.n) {
+              return _regenerator().w(function (_context64) {
+                while (1) switch (_context64.n) {
                   case 0:
                     if (!this.isDesktop()) {
-                      _context63.n = 2;
+                      _context64.n = 2;
                       break;
                     }
 
                     _t23 = this;
                     _t24 = url;
-                    _context63.n = 1;
+                    _context64.n = 1;
                     return this.getBrowserHeader(nToken);
 
                   case 1:
-                    _t22 = _t23.browserGet.call(_t23, _t24, _context63.v);
-                    _context63.n = 4;
+                    _t22 = _t23.browserGet.call(_t23, _t24, _context64.v);
+                    _context64.n = 4;
                     break;
 
                   case 2:
                     _t25 = this;
                     _t26 = url;
-                    _context63.n = 3;
+                    _context64.n = 3;
                     return this.getNativeHeader(nToken);
 
                   case 3:
-                    _t22 = _t25.nativeGet.call(_t25, _t26, _context63.v);
+                    _t22 = _t25.nativeGet.call(_t25, _t26, _context64.v);
 
                   case 4:
-                    return _context63.a(2, _t22);
+                    return _context64.a(2, _t22);
                 }
-              }, _callee63, this);
+              }, _callee64, this);
             }));
           }
         }, {
           key: "nativeGet",
           value: function nativeGet(url, headers) {
-            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee64() {
-              var x, _t27;
-
-              return _regenerator().w(function (_context64) {
-                while (1) switch (_context64.p = _context64.n) {
-                  case 0:
-                    _context64.p = 0;
-                    _context64.n = 1;
-                    return this.httpNative.setServerTrustMode('nocheck');
-
-                  case 1:
-                    _context64.n = 2;
-                    return this.withTimeout(this.httpNative.get(url, null, headers), this.TIMEOUT_GET);
-
-                  case 2:
-                    x = _context64.v;
-                    _context64.n = 4;
-                    break;
-
-                  case 3:
-                    _context64.p = 3;
-                    _t27 = _context64.v;
-                    throw this.normalizeError(_t27);
-
-                  case 4:
-                    return _context64.a(2, this.parseNative(x));
-                }
-              }, _callee64, this, [[0, 3]]);
-            }));
-          }
-        }, {
-          key: "browserGet",
-          value: function browserGet(url, headers) {
-            var attempt = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0;
             return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee65() {
-              var e, _t28;
+              var x, _t27;
 
               return _regenerator().w(function (_context65) {
                 while (1) switch (_context65.p = _context65.n) {
                   case 0:
                     _context65.p = 0;
                     _context65.n = 1;
+                    return this.httpNative.setServerTrustMode('nocheck');
+
+                  case 1:
+                    _context65.n = 2;
+                    return this.withTimeout(this.httpNative.get(url, null, headers), this.TIMEOUT_GET);
+
+                  case 2:
+                    x = _context65.v;
+                    _context65.n = 4;
+                    break;
+
+                  case 3:
+                    _context65.p = 3;
+                    _t27 = _context65.v;
+                    throw this.normalizeError(_t27);
+
+                  case 4:
+                    return _context65.a(2, this.parseNative(x));
+                }
+              }, _callee65, this, [[0, 3]]);
+            }));
+          }
+        }, {
+          key: "browserGet",
+          value: function browserGet(url, headers) {
+            var attempt = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0;
+            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee66() {
+              var e, _t28;
+
+              return _regenerator().w(function (_context66) {
+                while (1) switch (_context66.p = _context66.n) {
+                  case 0:
+                    _context66.p = 0;
+                    _context66.n = 1;
                     return this.http.get(url, {
                       headers: headers
                     }).pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_9__["timeout"])(this.TIMEOUT_GET)).toPromise();
 
                   case 1:
-                    return _context65.a(2, _context65.v);
+                    return _context66.a(2, _context66.v);
 
                   case 2:
-                    _context65.p = 2;
-                    _t28 = _context65.v;
+                    _context66.p = 2;
+                    _t28 = _context66.v;
                     console.log('GET error', url, _t28);
                     e = this.normalizeError(_t28); // Un solo reintento cuando fallo la conexion (sin internet, timeout o servidor reiniciando)
 
                     if (!(attempt == 0 && e.status == 0)) {
-                      _context65.n = 4;
+                      _context66.n = 4;
                       break;
                     }
 
-                    _context65.n = 3;
+                    _context66.n = 3;
                     return this.browserGet(url, headers, attempt + 1);
 
                   case 3:
-                    return _context65.a(2, _context65.v);
+                    return _context66.a(2, _context66.v);
 
                   case 4:
                     throw e;
 
                   case 5:
-                    return _context65.a(2);
+                    return _context66.a(2);
                 }
-              }, _callee65, this, [[0, 2]]);
+              }, _callee66, this, [[0, 2]]);
             }));
           } // PUT
 
@@ -6715,105 +6794,105 @@
           key: "put",
           value: function put(url, body) {
             var nToken = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
-            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee66() {
+            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee67() {
               var _t29, _t30, _t31, _t32, _t33, _t34, _t35;
 
-              return _regenerator().w(function (_context66) {
-                while (1) switch (_context66.n) {
+              return _regenerator().w(function (_context67) {
+                while (1) switch (_context67.n) {
                   case 0:
                     if (!this.isDesktop()) {
-                      _context66.n = 2;
+                      _context67.n = 2;
                       break;
                     }
 
                     _t30 = this;
                     _t31 = url;
                     _t32 = body;
-                    _context66.n = 1;
+                    _context67.n = 1;
                     return this.getBrowserHeader(nToken);
 
                   case 1:
-                    _t29 = _t30.browserPut.call(_t30, _t31, _t32, _context66.v);
-                    _context66.n = 4;
+                    _t29 = _t30.browserPut.call(_t30, _t31, _t32, _context67.v);
+                    _context67.n = 4;
                     break;
 
                   case 2:
                     _t33 = this;
                     _t34 = url;
                     _t35 = body;
-                    _context66.n = 3;
+                    _context67.n = 3;
                     return this.getNativeHeader(nToken);
 
                   case 3:
-                    _t29 = _t33.nativePut.call(_t33, _t34, _t35, _context66.v);
+                    _t29 = _t33.nativePut.call(_t33, _t34, _t35, _context67.v);
 
                   case 4:
-                    return _context66.a(2, _t29);
+                    return _context67.a(2, _t29);
                 }
-              }, _callee66, this);
+              }, _callee67, this);
             }));
           }
         }, {
           key: "nativePut",
           value: function nativePut(url, body, headers) {
-            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee67() {
-              var x, _t36;
-
-              return _regenerator().w(function (_context67) {
-                while (1) switch (_context67.p = _context67.n) {
-                  case 0:
-                    _context67.p = 0;
-                    _context67.n = 1;
-                    return this.httpNative.setServerTrustMode('nocheck');
-
-                  case 1:
-                    _context67.n = 2;
-                    return this.withTimeout(this.httpNative.put(url, body, headers), this.TIMEOUT_WRITE);
-
-                  case 2:
-                    x = _context67.v;
-                    _context67.n = 4;
-                    break;
-
-                  case 3:
-                    _context67.p = 3;
-                    _t36 = _context67.v;
-                    throw this.normalizeError(_t36, true);
-
-                  case 4:
-                    return _context67.a(2, this.parseNative(x));
-                }
-              }, _callee67, this, [[0, 3]]);
-            }));
-          }
-        }, {
-          key: "browserPut",
-          value: function browserPut(url, body, headers) {
             return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee68() {
-              var _t37;
+              var x, _t36;
 
               return _regenerator().w(function (_context68) {
                 while (1) switch (_context68.p = _context68.n) {
                   case 0:
                     _context68.p = 0;
                     _context68.n = 1;
+                    return this.httpNative.setServerTrustMode('nocheck');
+
+                  case 1:
+                    _context68.n = 2;
+                    return this.withTimeout(this.httpNative.put(url, body, headers), this.TIMEOUT_WRITE);
+
+                  case 2:
+                    x = _context68.v;
+                    _context68.n = 4;
+                    break;
+
+                  case 3:
+                    _context68.p = 3;
+                    _t36 = _context68.v;
+                    throw this.normalizeError(_t36, true);
+
+                  case 4:
+                    return _context68.a(2, this.parseNative(x));
+                }
+              }, _callee68, this, [[0, 3]]);
+            }));
+          }
+        }, {
+          key: "browserPut",
+          value: function browserPut(url, body, headers) {
+            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee69() {
+              var _t37;
+
+              return _regenerator().w(function (_context69) {
+                while (1) switch (_context69.p = _context69.n) {
+                  case 0:
+                    _context69.p = 0;
+                    _context69.n = 1;
                     return this.http.put(url, this.formData(body), {
                       headers: headers
                     }).pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_9__["timeout"])(this.TIMEOUT_WRITE)).toPromise();
 
                   case 1:
-                    return _context68.a(2, _context68.v);
+                    return _context69.a(2, _context69.v);
 
                   case 2:
-                    _context68.p = 2;
-                    _t37 = _context68.v;
+                    _context69.p = 2;
+                    _t37 = _context69.v;
                     console.log('PUT error', url, _t37);
                     throw this.normalizeError(_t37, true);
 
                   case 3:
-                    return _context68.a(2);
+                    return _context69.a(2);
                 }
-              }, _callee68, this, [[0, 2]]);
+              }, _callee69, this, [[0, 2]]);
             }));
           } // DELETE
 
@@ -6821,73 +6900,73 @@
           key: "delete",
           value: function _delete(url) {
             var nToken = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
-            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee69() {
+            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee70() {
               var _t38, _t39, _t40, _t41, _t42;
 
-              return _regenerator().w(function (_context69) {
-                while (1) switch (_context69.n) {
+              return _regenerator().w(function (_context70) {
+                while (1) switch (_context70.n) {
                   case 0:
                     if (!this.isDesktop()) {
-                      _context69.n = 2;
+                      _context70.n = 2;
                       break;
                     }
 
                     _t39 = this;
                     _t40 = url;
-                    _context69.n = 1;
+                    _context70.n = 1;
                     return this.getBrowserHeader(nToken);
 
                   case 1:
-                    _t38 = _t39.browserDelete.call(_t39, _t40, _context69.v);
-                    _context69.n = 4;
+                    _t38 = _t39.browserDelete.call(_t39, _t40, _context70.v);
+                    _context70.n = 4;
                     break;
 
                   case 2:
                     _t41 = this;
                     _t42 = url;
-                    _context69.n = 3;
+                    _context70.n = 3;
                     return this.getNativeHeader(nToken);
 
                   case 3:
-                    _t38 = _t41.nativeDelete.call(_t41, _t42, _context69.v);
+                    _t38 = _t41.nativeDelete.call(_t41, _t42, _context70.v);
 
                   case 4:
-                    return _context69.a(2, _t38);
+                    return _context70.a(2, _t38);
                 }
-              }, _callee69, this);
+              }, _callee70, this);
             }));
           }
         }, {
           key: "nativeDelete",
           value: function nativeDelete(url, headers) {
-            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee70() {
+            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee71() {
               var x, _t43;
 
-              return _regenerator().w(function (_context70) {
-                while (1) switch (_context70.p = _context70.n) {
+              return _regenerator().w(function (_context71) {
+                while (1) switch (_context71.p = _context71.n) {
                   case 0:
-                    _context70.p = 0;
-                    _context70.n = 1;
+                    _context71.p = 0;
+                    _context71.n = 1;
                     return this.httpNative.setServerTrustMode('nocheck');
 
                   case 1:
-                    _context70.n = 2;
+                    _context71.n = 2;
                     return this.withTimeout(this.httpNative["delete"](url, null, headers), this.TIMEOUT_WRITE);
 
                   case 2:
-                    x = _context70.v;
-                    _context70.n = 4;
+                    x = _context71.v;
+                    _context71.n = 4;
                     break;
 
                   case 3:
-                    _context70.p = 3;
-                    _t43 = _context70.v;
+                    _context71.p = 3;
+                    _t43 = _context71.v;
                     throw this.normalizeError(_t43, true);
 
                   case 4:
-                    return _context70.a(2, this.parseNative(x));
+                    return _context71.a(2, this.parseNative(x));
                 }
-              }, _callee70, this, [[0, 3]]);
+              }, _callee71, this, [[0, 3]]);
             }));
           }
         }, {
@@ -6907,31 +6986,31 @@
         }, {
           key: "browserDelete",
           value: function browserDelete(url, headers) {
-            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee71() {
+            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee72() {
               var _t44;
 
-              return _regenerator().w(function (_context71) {
-                while (1) switch (_context71.p = _context71.n) {
+              return _regenerator().w(function (_context72) {
+                while (1) switch (_context72.p = _context72.n) {
                   case 0:
-                    _context71.p = 0;
-                    _context71.n = 1;
+                    _context72.p = 0;
+                    _context72.n = 1;
                     return this.http["delete"](url, {
                       headers: headers
                     }).pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_9__["timeout"])(this.TIMEOUT_WRITE)).toPromise();
 
                   case 1:
-                    return _context71.a(2, _context71.v);
+                    return _context72.a(2, _context72.v);
 
                   case 2:
-                    _context71.p = 2;
-                    _t44 = _context71.v;
+                    _context72.p = 2;
+                    _t44 = _context72.v;
                     console.log('DELETE error', url, _t44);
                     throw this.normalizeError(_t44, true);
 
                   case 3:
-                    return _context71.a(2);
+                    return _context72.a(2);
                 }
-              }, _callee71, this, [[0, 2]]);
+              }, _callee72, this, [[0, 2]]);
             }));
           }
         }, {
@@ -7131,13 +7210,13 @@
         }, {
           key: "closeList",
           value: function closeList(evt) {
-            var _this37 = this;
+            var _this38 = this;
 
             if (this._disabled) return;
             this.showList = false;
             setTimeout(function () {
-              _this37.value = _this37.value.trim();
-              _this37.showed = false;
+              _this38.value = _this38.value.trim();
+              _this38.showed = false;
             }, 100);
           }
         }, {
@@ -7475,12 +7554,12 @@
         }, {
           key: "showMenu",
           value: function showMenu(evt) {
-            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee73() {
-              var _this38 = this;
+            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee74() {
+              var _this39 = this;
 
               var restringirNumerosClicked, options, popover;
-              return _regenerator().w(function (_context73) {
-                while (1) switch (_context73.n) {
+              return _regenerator().w(function (_context74) {
+                while (1) switch (_context74.n) {
                   case 0:
                     restringirNumerosClicked = new rxjs__WEBPACK_IMPORTED_MODULE_7__["Subject"]();
                     options = [{
@@ -7495,12 +7574,12 @@
                     // }
 
                     restringirNumerosClicked.subscribe(function () {
-                      return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(_this38, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee72() {
+                      return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(_this39, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee73() {
                         var modal, data;
-                        return _regenerator().w(function (_context72) {
-                          while (1) switch (_context72.n) {
+                        return _regenerator().w(function (_context73) {
+                          while (1) switch (_context73.n) {
                             case 0:
-                              _context72.n = 1;
+                              _context73.n = 1;
                               return this.modalCtrl.create({
                                 component: _restringir_numeros_restringir_numeros_page__WEBPACK_IMPORTED_MODULE_6__["RestringirNumerosPage"],
                                 componentProps: {
@@ -7509,28 +7588,28 @@
                               });
 
                             case 1:
-                              modal = _context72.v;
-                              _context72.n = 2;
+                              modal = _context73.v;
+                              _context73.n = 2;
                               return modal.present();
 
                             case 2:
-                              _context72.n = 3;
+                              _context73.n = 3;
                               return modal.onDidDismiss();
 
                             case 3:
-                              data = _context72.v.data;
+                              data = _context73.v.data;
 
                               if (data && data.numeros_restringidos) {
                                 this.grupo.numeros_restringidos = data.numeros_restringidos;
                               }
 
                             case 4:
-                              return _context72.a(2);
+                              return _context73.a(2);
                           }
-                        }, _callee72, this);
+                        }, _callee73, this);
                       }));
                     });
-                    _context73.n = 1;
+                    _context74.n = 1;
                     return this.popoverCtrl.create({
                       component: _shared_sub_menu_sub_menu_page__WEBPACK_IMPORTED_MODULE_5__["SubMenuPage"],
                       event: evt,
@@ -7542,14 +7621,14 @@
                     });
 
                   case 1:
-                    popover = _context73.v;
-                    _context73.n = 2;
+                    popover = _context74.v;
+                    _context74.n = 2;
                     return popover.present();
 
                   case 2:
-                    return _context73.a(2);
+                    return _context74.a(2);
                 }
-              }, _callee73, this);
+              }, _callee74, this);
             }));
           }
         }, {
@@ -7560,71 +7639,71 @@
         }, {
           key: "submit",
           value: function submit(form) {
-            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee74() {
+            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee75() {
               var loading, body, g, msg, _t45;
 
-              return _regenerator().w(function (_context74) {
-                while (1) switch (_context74.p = _context74.n) {
+              return _regenerator().w(function (_context75) {
+                while (1) switch (_context75.p = _context75.n) {
                   case 0:
                     if (this.isValid()) {
-                      _context74.n = 1;
+                      _context75.n = 1;
                       break;
                     }
 
-                    return _context74.a(2);
+                    return _context75.a(2);
 
                   case 1:
-                    _context74.n = 2;
+                    _context75.n = 2;
                     return this.loadCtrl.create({
                       message: this.grupo.id == -1 ? 'Creando grupo...' : 'Actualizando grupo...'
                     });
 
                   case 2:
-                    loading = _context74.v;
-                    _context74.n = 3;
+                    loading = _context75.v;
+                    _context75.n = 3;
                     return loading.present();
 
                   case 3:
                     setTimeout(function () {
                       loading.message = 'Calculando límites de grupos y numerones...';
                     }, 2000);
-                    _context74.p = 4;
+                    _context75.p = 4;
                     body = {
                       grupo: JSON.stringify(this.grupo)
                     };
-                    _context74.n = 5;
+                    _context75.n = 5;
                     return this.bs.post(this.bs.GRUPO_URL, body, true);
 
                   case 5:
-                    g = _context74.v;
+                    g = _context75.v;
                     msg = this.grupo.id == -1 ? 'Grupo creado con id #' + g.id : 'Grupo modificado con éxito';
-                    _context74.n = 6;
+                    _context75.n = 6;
                     return loading.dismiss();
 
                   case 6:
-                    _context74.n = 7;
+                    _context75.n = 7;
                     return this.util.presentAlert('Mensaje', msg);
 
                   case 7:
                     if (this.grupo.id == -1) this.navCtrl.pop();else this.modalCtrl.dismiss({
                       grupo: g
                     });
-                    _context74.n = 10;
+                    _context75.n = 10;
                     break;
 
                   case 8:
-                    _context74.p = 8;
-                    _t45 = _context74.v;
-                    _context74.n = 9;
+                    _context75.p = 8;
+                    _t45 = _context75.v;
+                    _context75.n = 9;
                     return loading.dismiss();
 
                   case 9:
                     this.util.handleError(_t45);
 
                   case 10:
-                    return _context74.a(2);
+                    return _context75.a(2);
                 }
-              }, _callee74, this, [[4, 8]]);
+              }, _callee75, this, [[4, 8]]);
             }));
           }
         }, {
@@ -7849,13 +7928,13 @@
         }, {
           key: "getClientes",
           value: function getClientes() {
-            var _this39 = this;
+            var _this40 = this;
 
             this.bs.get(this.bs.CLIENTE_URL, true).then(function (data) {
-              _this39.originales = data.clone();
-              _this39.clientes = data.clone();
+              _this40.originales = data.clone();
+              _this40.clientes = data.clone();
             })["catch"](function (err) {
-              return _this39.util.handleError(err);
+              return _this40.util.handleError(err);
             });
           }
         }, {
@@ -7883,12 +7962,12 @@
         }, {
           key: "nuevoCliente",
           value: function nuevoCliente() {
-            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee75() {
+            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee76() {
               var modal, data;
-              return _regenerator().w(function (_context75) {
-                while (1) switch (_context75.n) {
+              return _regenerator().w(function (_context76) {
+                while (1) switch (_context76.n) {
                   case 0:
-                    _context75.n = 1;
+                    _context76.n = 1;
                     return this.modalCtrl.create({
                       component: _cliente_cliente_page__WEBPACK_IMPORTED_MODULE_7__["ClientePage"],
                       componentProps: {
@@ -7897,16 +7976,16 @@
                     });
 
                   case 1:
-                    modal = _context75.v;
-                    _context75.n = 2;
+                    modal = _context76.v;
+                    _context76.n = 2;
                     return modal.present();
 
                   case 2:
-                    _context75.n = 3;
+                    _context76.n = 3;
                     return modal.onDidDismiss();
 
                   case 3:
-                    data = _context75.v.data;
+                    data = _context76.v.data;
 
                     if (data && data.cliente) {
                       this.originales.push(new _classes_classes__WEBPACK_IMPORTED_MODULE_4__["Cliente"](data.cliente));
@@ -7918,32 +7997,32 @@
                     }
 
                   case 4:
-                    return _context75.a(2);
+                    return _context76.a(2);
                 }
-              }, _callee75, this);
+              }, _callee76, this);
             }));
           }
         }, {
           key: "clienteClicked",
           value: function clienteClicked(cliente) {
-            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee76() {
+            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee77() {
               var modal, data, c, index;
-              return _regenerator().w(function (_context76) {
-                while (1) switch (_context76.n) {
+              return _regenerator().w(function (_context77) {
+                while (1) switch (_context77.n) {
                   case 0:
                     if (!this.searching) {
-                      _context76.n = 1;
+                      _context77.n = 1;
                       break;
                     }
 
                     this.modalCtrl.dismiss({
                       cliente: cliente
                     });
-                    _context76.n = 5;
+                    _context77.n = 5;
                     break;
 
                   case 1:
-                    _context76.n = 2;
+                    _context77.n = 2;
                     return this.modalCtrl.create({
                       component: _cliente_cliente_page__WEBPACK_IMPORTED_MODULE_7__["ClientePage"],
                       componentProps: {
@@ -7952,16 +8031,16 @@
                     });
 
                   case 2:
-                    modal = _context76.v;
-                    _context76.n = 3;
+                    modal = _context77.v;
+                    _context77.n = 3;
                     return modal.present();
 
                   case 3:
-                    _context76.n = 4;
+                    _context77.n = 4;
                     return modal.onDidDismiss();
 
                   case 4:
-                    data = _context76.v.data;
+                    data = _context77.v.data;
 
                     if (data && data.cliente) {
                       c = new _classes_classes__WEBPACK_IMPORTED_MODULE_4__["Cliente"](data.cliente);
@@ -7980,9 +8059,9 @@
                     }
 
                   case 5:
-                    return _context76.a(2);
+                    return _context77.a(2);
                 }
-              }, _callee76, this);
+              }, _callee77, this);
             }));
           }
         }, {
@@ -7993,15 +8072,15 @@
         }, {
           key: "eliminarCliente",
           value: function eliminarCliente(cliente) {
-            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee79() {
-              var _this40 = this;
+            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee80() {
+              var _this41 = this;
 
               var alert;
-              return _regenerator().w(function (_context79) {
-                while (1) switch (_context79.n) {
+              return _regenerator().w(function (_context80) {
+                while (1) switch (_context80.n) {
                   case 0:
                     console.log(cliente);
-                    _context79.n = 1;
+                    _context80.n = 1;
                     return this.alertCtrl.create({
                       header: "Eliminar Cliente #".concat(cliente.id),
                       message: "\xBFEst\xE1s seguro que deseas eliminar a <strong>".concat(cliente.primer_nombre, " ").concat(cliente.primer_apellido, "</strong>?"),
@@ -8013,16 +8092,16 @@
                         role: 'ok',
                         text: 'Si',
                         handler: function handler() {
-                          return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(_this40, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee78() {
-                            var _this41 = this;
+                          return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(_this41, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee79() {
+                            var _this42 = this;
 
                             var ex, _t46;
 
-                            return _regenerator().w(function (_context78) {
-                              while (1) switch (_context78.p = _context78.n) {
+                            return _regenerator().w(function (_context79) {
+                              while (1) switch (_context79.p = _context79.n) {
                                 case 0:
-                                  _context78.p = 0;
-                                  _context78.n = 1;
+                                  _context79.p = 0;
+                                  _context79.n = 1;
                                   return this.bs["delete"](this.bs.CLIENTE_URL + '/' + cliente.id, true);
 
                                 case 1:
@@ -8035,46 +8114,46 @@
                                     }
                                   });
                                   setTimeout(function () {
-                                    return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(_this41, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee77() {
-                                      return _regenerator().w(function (_context77) {
-                                        while (1) switch (_context77.n) {
+                                    return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(_this42, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee78() {
+                                      return _regenerator().w(function (_context78) {
+                                        while (1) switch (_context78.n) {
                                           case 0:
-                                            _context77.n = 1;
+                                            _context78.n = 1;
                                             return this.util.presentAlert('Mensaje', 'Cliente eliminado con éxito');
 
                                           case 1:
-                                            return _context77.a(2);
+                                            return _context78.a(2);
                                         }
-                                      }, _callee77, this);
+                                      }, _callee78, this);
                                     }));
                                   }, 1);
-                                  _context78.n = 3;
+                                  _context79.n = 3;
                                   break;
 
                                 case 2:
-                                  _context78.p = 2;
-                                  _t46 = _context78.v;
+                                  _context79.p = 2;
+                                  _t46 = _context79.v;
                                   ex = _t46;
                                   this.util.handleError(ex);
 
                                 case 3:
-                                  return _context78.a(2);
+                                  return _context79.a(2);
                               }
-                            }, _callee78, this, [[0, 2]]);
+                            }, _callee79, this, [[0, 2]]);
                           }));
                         }
                       }]
                     });
 
                   case 1:
-                    alert = _context79.v;
-                    _context79.n = 2;
+                    alert = _context80.v;
+                    _context80.n = 2;
                     return alert.present();
 
                   case 2:
-                    return _context79.a(2);
+                    return _context80.a(2);
                 }
-              }, _callee79, this);
+              }, _callee80, this);
             }));
           }
         }]);
@@ -8289,12 +8368,12 @@
         return _createClass(Util, [{
           key: "presentAlert",
           value: function presentAlert(title, message) {
-            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee80() {
+            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee81() {
               var alert;
-              return _regenerator().w(function (_context80) {
-                while (1) switch (_context80.n) {
+              return _regenerator().w(function (_context81) {
+                while (1) switch (_context81.n) {
                   case 0:
-                    _context80.n = 1;
+                    _context81.n = 1;
                     return this.alertCtrl.create({
                       header: title,
                       message: message,
@@ -8302,42 +8381,42 @@
                     });
 
                   case 1:
-                    alert = _context80.v;
-                    _context80.n = 2;
+                    alert = _context81.v;
+                    _context81.n = 2;
                     return alert.present();
 
                   case 2:
-                    _context80.n = 3;
+                    _context81.n = 3;
                     return alert.onWillDismiss();
 
                   case 3:
-                    return _context80.a(2);
+                    return _context81.a(2);
                 }
-              }, _callee80, this);
+              }, _callee81, this);
             }));
           }
         }, {
           key: "handleError",
           value: function handleError(err) {
-            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee81() {
+            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee82() {
               var msgAuth, _alert6, _t47, _t48;
 
-              return _regenerator().w(function (_context81) {
-                while (1) switch (_context81.p = _context81.n) {
+              return _regenerator().w(function (_context82) {
+                while (1) switch (_context82.p = _context82.n) {
                   case 0:
-                    _context81.p = 0;
+                    _context82.p = 0;
                     if (!err) err = {
                       status: 0,
                       message: 'Error desconocido.'
                     };
 
                     if (!(err.status == 410 || err.status == 401)) {
-                      _context81.n = 5;
+                      _context82.n = 5;
                       break;
                     }
 
                     msgAuth = 'Tu sesión no es válida o expiró. Inicia sesión de nuevo.';
-                    _context81.n = 1;
+                    _context82.n = 1;
                     return this.alertCtrl.create({
                       header: err.status == 410 ? 'La sesión expiró' : 'Sesión requerida',
                       message: msgAuth,
@@ -8345,16 +8424,16 @@
                     });
 
                   case 1:
-                    _alert6 = _context81.v;
-                    _context81.n = 2;
+                    _alert6 = _context82.v;
+                    _context82.n = 2;
                     return _alert6.present();
 
                   case 2:
-                    _context81.n = 3;
+                    _context82.n = 3;
                     return _alert6.onWillDismiss();
 
                   case 3:
-                    _context81.n = 4;
+                    _context82.n = 4;
                     return this.storage.remove('token');
 
                   case 4:
@@ -8368,68 +8447,68 @@
                       console.log('OneSignal skip', osErr);
                     }
 
-                    _context81.n = 6;
+                    _context82.n = 6;
                     break;
 
                   case 5:
-                    _context81.n = 6;
+                    _context82.n = 6;
                     return this.presentAlert('Error', err && err.message ? err.message : 'No se pudo conectar con el servidor.');
 
                   case 6:
-                    _context81.n = 11;
+                    _context82.n = 11;
                     break;
 
                   case 7:
-                    _context81.p = 7;
-                    _t47 = _context81.v;
+                    _context82.p = 7;
+                    _t47 = _context82.v;
                     console.log('handleError fallback', _t47);
-                    _context81.p = 8;
-                    _context81.n = 9;
+                    _context82.p = 8;
+                    _context82.n = 9;
                     return this.presentAlert('Error', err && err.message || 'No se pudo conectar con el servidor.');
 
                   case 9:
-                    _context81.n = 11;
+                    _context82.n = 11;
                     break;
 
                   case 10:
-                    _context81.p = 10;
-                    _t48 = _context81.v;
+                    _context82.p = 10;
+                    _t48 = _context82.v;
                     console.log('alert fallback failed', _t48);
 
                   case 11:
-                    return _context81.a(2);
+                    return _context82.a(2);
                 }
-              }, _callee81, this, [[8, 10], [0, 7]]);
+              }, _callee82, this, [[8, 10], [0, 7]]);
             }));
           }
         }, {
           key: "redirectToLogin",
           value: function redirectToLogin() {
-            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee82() {
+            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee83() {
               var _t49;
 
-              return _regenerator().w(function (_context82) {
-                while (1) switch (_context82.p = _context82.n) {
+              return _regenerator().w(function (_context83) {
+                while (1) switch (_context83.p = _context83.n) {
                   case 0:
-                    _context82.p = 0;
-                    _context82.n = 1;
+                    _context83.p = 0;
+                    _context83.n = 1;
                     return this.storage.remove('token');
 
                   case 1:
-                    _context82.n = 3;
+                    _context83.n = 3;
                     break;
 
                   case 2:
-                    _context82.p = 2;
-                    _t49 = _context82.v;
+                    _context83.p = 2;
+                    _t49 = _context83.v;
 
                   case 3:
                     this.navCtrl.navigateRoot('/login');
 
                   case 4:
-                    return _context82.a(2);
+                    return _context83.a(2);
                 }
-              }, _callee82, this, [[0, 2]]);
+              }, _callee83, this, [[0, 2]]);
             }));
           }
         }, {
@@ -8441,12 +8520,12 @@
           key: "presentToast",
           value: function presentToast(message) {
             var duration = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1500;
-            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee83() {
+            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee84() {
               var toast;
-              return _regenerator().w(function (_context83) {
-                while (1) switch (_context83.n) {
+              return _regenerator().w(function (_context84) {
+                while (1) switch (_context84.n) {
                   case 0:
-                    _context83.n = 1;
+                    _context84.n = 1;
                     return this.toastCtrl.create({
                       message: message,
                       duration: duration,
@@ -8454,14 +8533,14 @@
                     });
 
                   case 1:
-                    toast = _context83.v;
-                    _context83.n = 2;
+                    toast = _context84.v;
+                    _context84.n = 2;
                     return toast.present();
 
                   case 2:
-                    return _context83.a(2);
+                    return _context84.a(2);
                 }
-              }, _callee83, this);
+              }, _callee84, this);
             }));
           }
         }]);
@@ -8718,20 +8797,20 @@
         return _createClass(BoletosPage, [{
           key: "init",
           value: function init() {
-            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee84() {
+            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee85() {
               var d, _t50;
 
-              return _regenerator().w(function (_context84) {
-                while (1) switch (_context84.n) {
+              return _regenerator().w(function (_context85) {
+                while (1) switch (_context85.n) {
                   case 0:
-                    _context84.n = 1;
+                    _context85.n = 1;
                     return this.storage.get('date-type');
 
                   case 1:
-                    _t50 = _context84.v;
+                    _t50 = _context85.v;
 
                     if (_t50) {
-                      _context84.n = 2;
+                      _context85.n = 2;
                       break;
                     }
 
@@ -8740,11 +8819,11 @@
                   case 2:
                     this.dateType = _t50;
                     d = new Date();
-                    _context84.n = 3;
+                    _context85.n = 3;
                     return this.bs.getEmpleado();
 
                   case 3:
-                    this.currentEmpleado = _context84.v;
+                    this.currentEmpleado = _context85.v;
                     this.isAdmin = !!this.currentEmpleado.usuario.isadmin;
                     if (this.isAdmin) this.vb = true;else this.vb = this.currentEmpleado.usuario.vb;
                     this.empleadosCount = this.currentEmpleado.empleados.length;
@@ -8764,9 +8843,9 @@
                     console.log("HERE");
 
                   case 4:
-                    return _context84.a(2);
+                    return _context85.a(2);
                 }
-              }, _callee84, this);
+              }, _callee85, this);
             }));
           }
         }, {
@@ -8786,15 +8865,15 @@
         }, {
           key: "startAutoRefresh",
           value: function startAutoRefresh() {
-            var _this42 = this;
+            var _this43 = this;
 
             this.stopAutoRefresh();
             this.refreshTimer = setInterval(function () {
-              if (!_this42.loaded || _this42.refreshing || _this42.boletosDuplicados) return; // no refrescar mientras el usuario tiene un modal/filtro/calendario abierto
+              if (!_this43.loaded || _this43.refreshing || _this43.boletosDuplicados) return; // no refrescar mientras el usuario tiene un modal/filtro/calendario abierto
 
               if (document.querySelector('ion-modal, ion-popover, ion-alert, ion-action-sheet, ion-loading')) return;
 
-              _this42.getBoletos(true);
+              _this43.getBoletos(true);
             }, 2000);
           }
         }, {
@@ -8809,19 +8888,19 @@
           key: "getBoletos",
           value: function getBoletos() {
             var silent = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
-            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee87() {
-              var _this43 = this;
+            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee88() {
+              var _this44 = this;
 
               var body;
-              return _regenerator().w(function (_context87) {
-                while (1) switch (_context87.n) {
+              return _regenerator().w(function (_context88) {
+                while (1) switch (_context88.n) {
                   case 0:
                     if (!this.refreshing) {
-                      _context87.n = 1;
+                      _context88.n = 1;
                       break;
                     }
 
-                    return _context87.a(2);
+                    return _context88.a(2);
 
                   case 1:
                     this.refreshing = true;
@@ -8840,10 +8919,10 @@
                       'to_date': moment__WEBPACK_IMPORTED_MODULE_8___default()(this.to_date).format('YYYY/MM/DD') + ' 23:59:59.999999'
                     };
                     this.bs.post(this.bs.BOLETO_URL + '/get/true', body, true).then(function (data) {
-                      return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(_this43, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee85() {
+                      return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(_this44, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee86() {
                         var sig;
-                        return _regenerator().w(function (_context85) {
-                          while (1) switch (_context85.n) {
+                        return _regenerator().w(function (_context86) {
+                          while (1) switch (_context86.n) {
                             case 0:
                               console.log('GOT DATA');
                               data = (data || []).sort(function (x, y) {
@@ -8857,11 +8936,11 @@
                               }).join('|');
 
                               if (!(silent && sig === this.lastSig)) {
-                                _context85.n = 1;
+                                _context86.n = 1;
                                 break;
                               }
 
-                              return _context85.a(2);
+                              return _context86.a(2);
 
                             case 1:
                               this.lastSig = sig;
@@ -8875,7 +8954,7 @@
                               });
                               this.originales = data.clone();
                               this.boletos = data;
-                              _context85.n = 2;
+                              _context86.n = 2;
                               return this.search({
                                 target: {
                                   value: this.searchTerm
@@ -8886,41 +8965,41 @@
                               this.loaded = true;
 
                             case 3:
-                              return _context85.a(2);
+                              return _context86.a(2);
                           }
-                        }, _callee85, this);
+                        }, _callee86, this);
                       }));
                     })["catch"](function (err) {
-                      return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(_this43, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee86() {
-                        return _regenerator().w(function (_context86) {
-                          while (1) switch (_context86.n) {
+                      return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(_this44, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee87() {
+                        return _regenerator().w(function (_context87) {
+                          while (1) switch (_context87.n) {
                             case 0:
                               console.log(err);
                               if (!silent) this.util.handleError(err);
 
                             case 1:
-                              return _context86.a(2);
+                              return _context87.a(2);
                           }
-                        }, _callee86, this);
+                        }, _callee87, this);
                       }));
                     })["finally"](function () {
-                      _this43.refreshing = false;
-                      if (!_this43.loaded) _this43.loaded = true;
+                      _this44.refreshing = false;
+                      if (!_this44.loaded) _this44.loaded = true;
                     });
 
                   case 2:
-                    return _context87.a(2);
+                    return _context88.a(2);
                 }
-              }, _callee87, this);
+              }, _callee88, this);
             }));
           }
         }, {
           key: "openCalendar",
           value: function openCalendar() {
-            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee88() {
+            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee89() {
               var options, z, myCalendar, data;
-              return _regenerator().w(function (_context88) {
-                while (1) switch (_context88.n) {
+              return _regenerator().w(function (_context89) {
+                while (1) switch (_context89.n) {
                   case 0:
                     options = {
                       title: '',
@@ -8949,7 +9028,7 @@
                     // weekdaysShort: 'Dom._Lun._Mar._Mier._Jue._Vier._Sab.'.split('_'),
                     // weekdaysMin: 'Do_Lu_Ma_Mi_Ju_Vi_Sa'.split('_')
 
-                    _context88.n = 1;
+                    _context89.n = 1;
                     return this.modalCtrl.create({
                       component: ion2_calendar__WEBPACK_IMPORTED_MODULE_10__["CalendarModal"],
                       componentProps: {
@@ -8958,16 +9037,16 @@
                     });
 
                   case 1:
-                    myCalendar = _context88.v;
-                    _context88.n = 2;
+                    myCalendar = _context89.v;
+                    _context89.n = 2;
                     return myCalendar.present();
 
                   case 2:
-                    _context88.n = 3;
+                    _context89.n = 3;
                     return myCalendar.onDidDismiss();
 
                   case 3:
-                    data = _context88.v.data;
+                    data = _context89.v.data;
 
                     // console.log(data);
                     // console.log(data);
@@ -8984,20 +9063,20 @@
                     }
 
                   case 4:
-                    return _context88.a(2);
+                    return _context89.a(2);
                 }
-              }, _callee88, this);
+              }, _callee89, this);
             }));
           }
         }, {
           key: "filtrosClicked",
           value: function filtrosClicked(evt) {
-            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee89() {
+            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee90() {
               var modal, data;
-              return _regenerator().w(function (_context89) {
-                while (1) switch (_context89.n) {
+              return _regenerator().w(function (_context90) {
+                while (1) switch (_context90.n) {
                   case 0:
-                    _context89.n = 1;
+                    _context90.n = 1;
                     return this.modalCtrl.create({
                       component: _ventas_filtro_ventas_filtro_page__WEBPACK_IMPORTED_MODULE_12__["VentasFiltroPage"],
                       componentProps: {
@@ -9014,16 +9093,16 @@
                     });
 
                   case 1:
-                    modal = _context89.v;
-                    _context89.n = 2;
+                    modal = _context90.v;
+                    _context90.n = 2;
                     return modal.present();
 
                   case 2:
-                    _context89.n = 3;
+                    _context90.n = 3;
                     return modal.onWillDismiss();
 
                   case 3:
-                    data = _context89.v.data;
+                    data = _context90.v.data;
 
                     if (data) {
                       console.log(data.empleado);
@@ -9043,52 +9122,52 @@
                     }
 
                   case 4:
-                    return _context89.a(2);
+                    return _context90.a(2);
                 }
-              }, _callee89, this);
+              }, _callee90, this);
             }));
           }
         }, {
           key: "applyFilters",
           value: function applyFilters() {
-            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee90() {
-              var _this44 = this;
+            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee91() {
+              var _this45 = this;
 
               var load, boletos, data, allIndex, temp, _loop2, i, _t51;
 
-              return _regenerator().w(function (_context91) {
-                while (1) switch (_context91.p = _context91.n) {
+              return _regenerator().w(function (_context92) {
+                while (1) switch (_context92.p = _context92.n) {
                   case 0:
                     // console.log(this.boletos);
                     console.log('Sorteo_tipo', this.sorteo_tipo);
                     console.log(this.originales.filter(function (x) {
                       return x.numeros.find(function (x) {
-                        return x.numero == _this44.numero;
+                        return x.numero == _this45.numero;
                       }) != null;
                     }));
                     if (this.numero) this.boletos = this.originales.filter(function (x) {
                       return x.numeros.find(function (x) {
-                        return x.numero == _this44.numero;
+                        return x.numero == _this45.numero;
                       }) != null;
                     });else this.boletos = this.originales.clone();
                     if (this.turnoSearching != null) this.boletos = this.boletos.filter(function (x) {
-                      return moment__WEBPACK_IMPORTED_MODULE_8___default()(x.juego_fecha).format('hh:mm A') == _this44.turnoSearching;
+                      return moment__WEBPACK_IMPORTED_MODULE_8___default()(x.juego_fecha).format('hh:mm A') == _this45.turnoSearching;
                     });
                     if (this.empleadoSearching.id != -1) this.boletos = this.boletos.filter(function (x) {
-                      return _this44.empleadoSearching.agentes.includes(x.empleado_id);
+                      return _this45.empleadoSearching.agentes.includes(x.empleado_id);
                     });
                     if (this.agente.id != -1) this.boletos = this.boletos.filter(function (x) {
-                      return x.empleado_id == _this44.agente.id;
+                      return x.empleado_id == _this45.agente.id;
                     });
                     if (this.sorteo_tipo) this.boletos = this.boletos.filter(function (x) {
-                      return x.sorteo_tipo == _this44.sorteo_tipo;
+                      return x.sorteo_tipo == _this45.sorteo_tipo;
                     });
                     if (this.pais_id) this.boletos = this.boletos.filter(function (x) {
-                      return x.pais_id == _this44.pais_id;
+                      return x.pais_id == _this45.pais_id;
                     });
 
                     if (!this.boletosDuplicados) {
-                      _context91.n = 10;
+                      _context92.n = 10;
                       break;
                     }
 
@@ -9096,29 +9175,29 @@
                     // this.totalBalance = 0;
                     // this.totalInversion = 0;
                     this.loaded = false;
-                    _context91.n = 1;
+                    _context92.n = 1;
                     return this.loadCtrl.create({
                       message: 'Obteniendo duplicados...'
                     });
 
                   case 1:
-                    load = _context91.v;
+                    load = _context92.v;
                     boletos = []; // let boletosCopy: BoletoMock[] = this.boletos.clone().filter(x => !x.iscancelled && !this.isWinner(x));
                     // this.boletos = [];
                     // this.totalGanancia = 0;
                     // this.totalInversion = 0;
 
-                    _context91.n = 2;
+                    _context92.n = 2;
                     return load.present();
 
                   case 2:
-                    _context91.p = 2;
-                    _context91.n = 3;
+                    _context92.p = 2;
+                    _context92.n = 3;
                     return this.bs.get(this.bs.BASE_URL_API + 'boletos-duplicados/' + moment__WEBPACK_IMPORTED_MODULE_8___default()(this.from_date).format('YYYY-MM-DD'), true);
 
                   case 3:
-                    data = _context91.v;
-                    _context91.n = 4;
+                    data = _context92.v;
+                    _context92.n = 4;
                     return load.dismiss();
 
                   case 4:
@@ -9130,10 +9209,10 @@
                       return allIndex.includes(x.indice);
                     });
                     _loop2 = /*#__PURE__*/_regenerator().m(function _loop2(i) {
-                      return _regenerator().w(function (_context90) {
-                        while (1) switch (_context90.n) {
+                      return _regenerator().w(function (_context91) {
+                        while (1) switch (_context91.n) {
                           case 0:
-                            boletos.push.apply(boletos, _toConsumableArray(_this44.boletos.filter(function (x) {
+                            boletos.push.apply(boletos, _toConsumableArray(_this45.boletos.filter(function (x) {
                               return data[i].includes(x.indice);
                             }).map(function (x) {
                               return Object.assign(Object.assign({}, x), {
@@ -9142,7 +9221,7 @@
                             })));
 
                           case 1:
-                            return _context90.a(2);
+                            return _context91.a(2);
                         }
                       }, _loop2);
                     });
@@ -9150,29 +9229,29 @@
 
                   case 5:
                     if (!(i < data.length)) {
-                      _context91.n = 7;
+                      _context92.n = 7;
                       break;
                     }
 
-                    return _context91.d(_regeneratorValues(_loop2(i)), 6);
+                    return _context92.d(_regeneratorValues(_loop2(i)), 6);
 
                   case 6:
                     i++;
-                    _context91.n = 5;
+                    _context92.n = 5;
                     break;
 
                   case 7:
                     this.boletos = JSON.parse(JSON.stringify(boletos));
                     this.loaded = true;
-                    _context91.n = 10;
+                    _context92.n = 10;
                     break;
 
                   case 8:
-                    _context91.p = 8;
-                    _t51 = _context91.v;
+                    _context92.p = 8;
+                    _t51 = _context92.v;
                     this.boletosDuplicados = false;
                     this.loaded = true;
-                    _context91.n = 9;
+                    _context92.n = 9;
                     return load.dismiss();
 
                   case 9:
@@ -9181,9 +9260,9 @@
                     });
 
                   case 10:
-                    return _context91.a(2);
+                    return _context92.a(2);
                 }
-              }, _callee90, this, [[2, 8]]);
+              }, _callee91, this, [[2, 8]]);
             }));
           }
         }, {
@@ -9202,12 +9281,12 @@
         }, {
           key: "search",
           value: function search(evt) {
-            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee91() {
+            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee92() {
               var termino;
-              return _regenerator().w(function (_context92) {
-                while (1) switch (_context92.n) {
+              return _regenerator().w(function (_context93) {
+                while (1) switch (_context93.n) {
                   case 0:
-                    _context92.n = 1;
+                    _context93.n = 1;
                     return this.applyFilters();
 
                   case 1:
@@ -9220,9 +9299,9 @@
                     this.calcularBalances();
 
                   case 2:
-                    return _context92.a(2);
+                    return _context93.a(2);
                 }
-              }, _callee91, this);
+              }, _callee92, this);
             }));
           }
         }, {
@@ -9237,16 +9316,16 @@
         }, {
           key: "boletoClicked",
           value: function boletoClicked(boleto) {
-            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee92() {
+            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee93() {
               var b, modal;
-              return _regenerator().w(function (_context93) {
-                while (1) switch (_context93.n) {
+              return _regenerator().w(function (_context94) {
+                while (1) switch (_context94.n) {
                   case 0:
                     b = JSON.clone(boleto);
                     b.numeros = b.numeros.sort(function (x, y) {
                       return x.numero > y.numero ? 1 : -1;
                     });
-                    _context93.n = 1;
+                    _context94.n = 1;
                     return this.modalCtrl.create({
                       component: _boleto_boleto_page__WEBPACK_IMPORTED_MODULE_13__["BoletoPage"],
                       componentProps: {
@@ -9255,14 +9334,14 @@
                     });
 
                   case 1:
-                    modal = _context93.v;
-                    _context93.n = 2;
+                    modal = _context94.v;
+                    _context94.n = 2;
                     return modal.present();
 
                   case 2:
-                    return _context93.a(2);
+                    return _context94.a(2);
                 }
-              }, _callee92, this);
+              }, _callee93, this);
             }));
           }
         }, {
@@ -9278,30 +9357,30 @@
         }, {
           key: "cancelarBoleto",
           value: function cancelarBoleto(sliding, boleto) {
-            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee95() {
-              var _this45 = this;
+            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee96() {
+              var _this46 = this;
 
               var yaJugado, alert;
-              return _regenerator().w(function (_context96) {
-                while (1) switch (_context96.n) {
+              return _regenerator().w(function (_context97) {
+                while (1) switch (_context97.n) {
                   case 0:
                     if (!(!this.esDueno(boleto) && !this.isAdmin)) {
-                      _context96.n = 2;
+                      _context97.n = 2;
                       break;
                     }
 
                     sliding.close();
-                    _context96.n = 1;
+                    _context97.n = 1;
                     return this.util.presentAlert('Mensaje', 'Solo el vendedor que dio el boleto puede anularlo.');
 
                   case 1:
-                    return _context96.a(2, _context96.v);
+                    return _context97.a(2, _context97.v);
 
                   case 2:
                     // Sorteo ya corrido: al vendedor se lo bloquea en el servidor; al dueno
                     // se le avisa que va a mover un cierre ya hecho.
                     yaJugado = !!(boleto.iscompleted || this.isWinner(boleto)) || !!boleto.juego_fecha && moment__WEBPACK_IMPORTED_MODULE_8___default()(boleto.juego_fecha).unix() <= moment_timezone__WEBPACK_IMPORTED_MODULE_9___default()().tz('America/Managua').unix();
-                    _context96.n = 3;
+                    _context97.n = 3;
                     return this.alertCtrl.create({
                       header: "Anular Boleto #".concat(boleto.indice),
                       message: yaJugado ? "Este sorteo ya se jug\xF3: anular <strong>".concat(boleto.indice, "</strong> cambia el vendido y el pagado ") + "de ese cierre, y quedar\xE1 registrado que lo anul\xF3 el due\xF1o. \xBFContinuar?" : "\xBFEst\xE1s seguro que deseas anular el boleto\"<strong>".concat(boleto.indice, "</strong>\"?"),
@@ -9313,67 +9392,67 @@
                         role: 'ok',
                         text: 'Si',
                         handler: function handler() {
-                          return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(_this45, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee94() {
-                            var _this46 = this;
+                          return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(_this46, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee95() {
+                            var _this47 = this;
 
                             var data, ok, ex, _t52;
 
-                            return _regenerator().w(function (_context95) {
-                              while (1) switch (_context95.p = _context95.n) {
+                            return _regenerator().w(function (_context96) {
+                              while (1) switch (_context96.p = _context96.n) {
                                 case 0:
-                                  _context95.p = 0;
-                                  _context95.n = 1;
+                                  _context96.p = 0;
+                                  _context96.n = 1;
                                   return this.bs["delete"](this.bs.BOLETO_URL + '/' + boleto.id, true);
 
                                 case 1:
-                                  data = _context95.v;
+                                  data = _context96.v;
                                   ok = data && (data.message || data.mensaje) || 'Boleto anulado con éxito.';
                                   boleto.iscancelled = true;
                                   boleto.log = ok;
                                   this.calcularBalances();
                                   sliding.close();
                                   setTimeout(function () {
-                                    return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(_this46, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee93() {
-                                      return _regenerator().w(function (_context94) {
-                                        while (1) switch (_context94.n) {
+                                    return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(_this47, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee94() {
+                                      return _regenerator().w(function (_context95) {
+                                        while (1) switch (_context95.n) {
                                           case 0:
                                             this.util.presentAlert('Mensaje', ok);
 
                                           case 1:
-                                            return _context94.a(2);
+                                            return _context95.a(2);
                                         }
-                                      }, _callee93, this);
+                                      }, _callee94, this);
                                     }));
                                   }, 100);
-                                  _context95.n = 3;
+                                  _context96.n = 3;
                                   break;
 
                                 case 2:
-                                  _context95.p = 2;
-                                  _t52 = _context95.v;
+                                  _context96.p = 2;
+                                  _t52 = _context96.v;
                                   ex = _t52;
                                   sliding.close();
-                                  _context95.n = 3;
+                                  _context96.n = 3;
                                   return this.util.handleError(ex);
 
                                 case 3:
-                                  return _context95.a(2);
+                                  return _context96.a(2);
                               }
-                            }, _callee94, this, [[0, 2]]);
+                            }, _callee95, this, [[0, 2]]);
                           }));
                         }
                       }]
                     });
 
                   case 3:
-                    alert = _context96.v;
-                    _context96.n = 4;
+                    alert = _context97.v;
+                    _context97.n = 4;
                     return alert.present();
 
                   case 4:
-                    return _context96.a(2);
+                    return _context97.a(2);
                 }
-              }, _callee95, this);
+              }, _callee96, this);
             }));
           } // Copia el boleto a una venta nueva: mismos numeros y cliente,
           // y el vendedor solo cambia el sorteo (si el original ya paso salta a la
@@ -9382,10 +9461,10 @@
         }, {
           key: "copiarBoleto",
           value: function copiarBoleto(sliding, boleto) {
-            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee96() {
+            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee97() {
               var copia, modal;
-              return _regenerator().w(function (_context97) {
-                while (1) switch (_context97.n) {
+              return _regenerator().w(function (_context98) {
+                while (1) switch (_context98.n) {
                   case 0:
                     sliding.close();
                     copia = {
@@ -9414,7 +9493,7 @@
                       }),
                       total: 0
                     };
-                    _context97.n = 1;
+                    _context98.n = 1;
                     return this.modalCtrl.create({
                       component: _boleto_boleto_page__WEBPACK_IMPORTED_MODULE_13__["BoletoPage"],
                       componentProps: {
@@ -9424,25 +9503,25 @@
                     });
 
                   case 1:
-                    modal = _context97.v;
-                    _context97.n = 2;
+                    modal = _context98.v;
+                    _context98.n = 2;
                     return modal.present();
 
                   case 2:
-                    return _context97.a(2);
+                    return _context98.a(2);
                 }
-              }, _callee96, this);
+              }, _callee97, this);
             }));
           }
         }, {
           key: "openSubMenu",
           value: function openSubMenu(evt) {
-            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee98() {
-              var _this47 = this;
+            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee99() {
+              var _this48 = this;
 
               var verReporteCompletoClicked, options, popover;
-              return _regenerator().w(function (_context99) {
-                while (1) switch (_context99.n) {
+              return _regenerator().w(function (_context100) {
+                while (1) switch (_context100.n) {
                   case 0:
                     verReporteCompletoClicked = new rxjs__WEBPACK_IMPORTED_MODULE_15__["Subject"]();
                     options = [{
@@ -9452,11 +9531,11 @@
                       type: 'button'
                     }];
                     verReporteCompletoClicked.subscribe(function () {
-                      return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(_this47, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee97() {
+                      return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(_this48, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee98() {
                         var numeros, disntics, temp, modal, _yield$modal$onWillDi, data;
 
-                        return _regenerator().w(function (_context98) {
-                          while (1) switch (_context98.n) {
+                        return _regenerator().w(function (_context99) {
+                          while (1) switch (_context99.n) {
                             case 0:
                               // this.distinctSorteos()
                               numeros = this.boletos.filter(function (z) {
@@ -9493,7 +9572,7 @@
                                 // }
                               }
 
-                              _context98.n = 1;
+                              _context99.n = 1;
                               return this.modalCtrl.create({
                                 component: _reporte_completo_reporte_completo_page__WEBPACK_IMPORTED_MODULE_16__["ReporteCompletoPage"],
                                 componentProps: {
@@ -9506,16 +9585,16 @@
                               });
 
                             case 1:
-                              modal = _context98.v;
-                              _context98.n = 2;
+                              modal = _context99.v;
+                              _context99.n = 2;
                               return modal.present();
 
                             case 2:
-                              _context98.n = 3;
+                              _context99.n = 3;
                               return modal.onWillDismiss();
 
                             case 3:
-                              _yield$modal$onWillDi = _context98.v;
+                              _yield$modal$onWillDi = _context99.v;
                               data = _yield$modal$onWillDi.data;
 
                               if (data && data.numero) {
@@ -9528,12 +9607,12 @@
                               }
 
                             case 4:
-                              return _context98.a(2);
+                              return _context99.a(2);
                           }
-                        }, _callee97, this);
+                        }, _callee98, this);
                       }));
                     });
-                    _context99.n = 1;
+                    _context100.n = 1;
                     return this.popoverCtrl.create({
                       component: _shared_sub_menu_sub_menu_page__WEBPACK_IMPORTED_MODULE_14__["SubMenuPage"],
                       event: evt,
@@ -9544,18 +9623,18 @@
                     });
 
                   case 1:
-                    popover = _context99.v;
-                    _context99.n = 2;
+                    popover = _context100.v;
+                    _context100.n = 2;
                     return popover.present();
 
                   case 2:
-                    _context99.n = 3;
+                    _context100.n = 3;
                     return popover.onWillDismiss();
 
                   case 3:
-                    return _context99.a(2);
+                    return _context100.a(2);
                 }
-              }, _callee98, this);
+              }, _callee99, this);
             }));
           }
         }, {
@@ -10346,14 +10425,14 @@
             };
 
             Array.prototype.removeBy = function (params) {
-              var _this48 = this;
+              var _this49 = this;
 
               var x = this.filter(params) || [];
               x.forEach(function (y) {
                 // this.remove()
-                var index = _this48.indexOf(y);
+                var index = _this49.indexOf(y);
 
-                if (index > -1) _this48.splice(index, 1);
+                if (index > -1) _this49.splice(index, 1);
               });
               return x.length;
             };
@@ -10413,30 +10492,30 @@
         }, {
           key: "iniciarPresencia",
           value: function iniciarPresencia() {
-            var _this49 = this;
+            var _this50 = this;
 
             if (this.presenciaTimer) return;
             this.marcarPresencia();
             this.presenciaTimer = setInterval(function () {
-              return _this49.marcarPresencia();
+              return _this50.marcarPresencia();
             }, 30000);
           }
         }, {
           key: "loadEmpleado",
           value: function loadEmpleado() {
             var presentAlert = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
-            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee99() {
+            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee100() {
               var temp, status, _t53;
 
-              return _regenerator().w(function (_context100) {
-                while (1) switch (_context100.p = _context100.n) {
+              return _regenerator().w(function (_context101) {
+                while (1) switch (_context101.p = _context101.n) {
                   case 0:
-                    _context100.p = 0;
-                    _context100.n = 1;
+                    _context101.p = 0;
+                    _context101.n = 1;
                     return this.bs.getEmpleado();
 
                   case 1:
-                    temp = _context100.v;
+                    temp = _context101.v;
 
                     if (!presentAlert && temp && temp.usuario) {
                       try {
@@ -10449,61 +10528,61 @@
                       }
                     }
 
-                    _context100.n = 5;
+                    _context101.n = 5;
                     break;
 
                   case 2:
-                    _context100.p = 2;
-                    _t53 = _context100.v;
+                    _context101.p = 2;
+                    _t53 = _context101.v;
                     console.log('loadEmpleado', _t53);
                     status = _t53 && _t53.status; // Solo se cierra la sesion si el servidor la rechazo (401/410); si fallo la
                     // conexion la app sigue funcionando y se vuelve a cargar al refrescar/reanudar
 
                     if (!(status == 401 || status == 410)) {
-                      _context100.n = 4;
+                      _context101.n = 4;
                       break;
                     }
 
-                    _context100.n = 3;
+                    _context101.n = 3;
                     return this.util.redirectToLogin();
 
                   case 3:
-                    _context100.n = 5;
+                    _context101.n = 5;
                     break;
 
                   case 4:
                     if (!presentAlert) {
-                      _context100.n = 5;
+                      _context101.n = 5;
                       break;
                     }
 
-                    _context100.n = 5;
+                    _context101.n = 5;
                     return this.util.handleError(_t53);
 
                   case 5:
-                    return _context100.a(2);
+                    return _context101.a(2);
                 }
-              }, _callee99, this, [[0, 2]]);
+              }, _callee100, this, [[0, 2]]);
             }));
           }
         }, {
           key: "initOneSignal",
           value: function initOneSignal() {
-            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee100() {
+            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee101() {
               var _t54;
 
-              return _regenerator().w(function (_context101) {
-                while (1) switch (_context101.p = _context101.n) {
+              return _regenerator().w(function (_context102) {
+                while (1) switch (_context102.p = _context102.n) {
                   case 0:
-                    _context101.p = 0;
+                    _context102.p = 0;
 
                     if (!(typeof window.cordova === 'undefined')) {
-                      _context101.n = 1;
+                      _context102.n = 1;
                       break;
                     }
 
                     console.log('OneSignal skip (web)');
-                    return _context101.a(2);
+                    return _context102.a(2);
 
                   case 1:
                     this.oneSignal.startInit(src_environments_environment_prod__WEBPACK_IMPORTED_MODULE_14__["environment"].ONE_SIGNAL_APP_ID, src_environments_environment_prod__WEBPACK_IMPORTED_MODULE_14__["environment"].FIREBASE_SENDER_ID);
@@ -10517,131 +10596,131 @@
                     });
                     this.oneSignal.endInit();
                     console.log('ONE SIGNAL SET UP');
-                    _context101.n = 3;
+                    _context102.n = 3;
                     break;
 
                   case 2:
-                    _context101.p = 2;
-                    _t54 = _context101.v;
+                    _context102.p = 2;
+                    _t54 = _context102.v;
                     console.log('OneSignal init skipped (web)', _t54);
 
                   case 3:
-                    return _context101.a(2);
+                    return _context102.a(2);
                 }
-              }, _callee100, this, [[0, 2]]);
+              }, _callee101, this, [[0, 2]]);
             }));
           }
         }, {
           key: "initializeApp",
           value: function initializeApp() {
-            var _this50 = this;
+            var _this51 = this;
 
             // b411c99a-a62f-4b07-a5ad-c4e4eb6d3c8e
             this.platform.ready().then(function () {
               // this.platform.
-              _this50.initOneSignal();
+              _this51.initOneSignal();
 
-              var path = _this50.location.path().toLowerCase();
+              var path = _this51.location.path().toLowerCase();
 
               console.log('path:', path);
-              if (path != '/login') _this50.loadEmpleado();
+              if (path != '/login') _this51.loadEmpleado();
 
-              _this50.iniciarPresencia();
+              _this51.iniciarPresencia();
 
-              _this50.platform.resume.subscribe(function (evt) {
-                _this50.marcarPresencia();
+              _this51.platform.resume.subscribe(function (evt) {
+                _this51.marcarPresencia();
 
-                if (_this50.location.path().toLowerCase() != '/login') _this50.loadEmpleado(true);
+                if (_this51.location.path().toLowerCase() != '/login') _this51.loadEmpleado(true);
               });
 
-              _this50.platform.backButton.subscribe(function () {
-                var path = _this50.location.path().toLowerCase();
+              _this51.platform.backButton.subscribe(function () {
+                var path = _this51.location.path().toLowerCase();
 
                 console.log('path:', path);
 
                 if (path == '' || path.trim() == '/tabs/tab1' || path.trim() == '/tabs/tab2' || path.trim() == '/login') {
                   try {
-                    if (typeof window.cordova !== 'undefined') _this50.appMinimize.minimize();
+                    if (typeof window.cordova !== 'undefined') _this51.appMinimize.minimize();
                   } catch (minErr) {
                     console.log('minimize skip', minErr);
                   }
                 }
               });
 
-              _this50.storage.get('token').then(function (d) {
-                if (!d) _this50.navCtrl.navigateRoot('/login');
+              _this51.storage.get('token').then(function (d) {
+                if (!d) _this51.navCtrl.navigateRoot('/login');
               });
 
-              _this50.storage.get('keep').then(function (d) {
-                _this50.util.KEEP = d == undefined ? true : d;
+              _this51.storage.get('keep').then(function (d) {
+                _this51.util.KEEP = d == undefined ? true : d;
               });
 
-              _this50.storage.get('continue').then(function (d) {
-                _this50.util.CONTINUE = d == undefined ? false : d;
+              _this51.storage.get('continue').then(function (d) {
+                _this51.util.CONTINUE = d == undefined ? false : d;
               });
 
-              _this50.storage.get('impresora_address').then(function (d) {
-                return _this50.util.IMPRESORA_ADDRESS = d || '';
+              _this51.storage.get('impresora_address').then(function (d) {
+                return _this51.util.IMPRESORA_ADDRESS = d || '';
               });
 
-              _this50.storage.get('qty_first_v2').then(function (d) {
-                _this50.util.QTY_FIRST = d == null ? true : d; // console.log(d);
+              _this51.storage.get('qty_first_v2').then(function (d) {
+                _this51.util.QTY_FIRST = d == null ? true : d; // console.log(d);
               });
 
-              _this50.storage.get('send_sms').then(function (d) {
-                _this50.util.SEND_SMS = d == null ? false : d; // console.log(d);
+              _this51.storage.get('send_sms').then(function (d) {
+                _this51.util.SEND_SMS = d == null ? false : d; // console.log(d);
               });
 
-              _this50.storage.get('send_whatsapp').then(function (d) {
-                _this50.util.SEND_WHATSAPP = d == null ? false : d; // console.log(d);
+              _this51.storage.get('send_whatsapp').then(function (d) {
+                _this51.util.SEND_WHATSAPP = d == null ? false : d; // console.log(d);
               });
 
-              _this50.storage.get('print_receipt').then(function (d) {
-                _this50.util.PRINT_RECEIPT = d == null ? false : d; // console.log(d);
+              _this51.storage.get('print_receipt').then(function (d) {
+                _this51.util.PRINT_RECEIPT = d == null ? false : d; // console.log(d);
               });
 
               if (typeof window.cordova !== 'undefined') {
                 try {
-                  _this50.statusBar.overlaysWebView(false);
+                  _this51.statusBar.overlaysWebView(false);
 
-                  _this50.statusBar.styleLightContent();
+                  _this51.statusBar.styleLightContent();
 
-                  _this50.statusBar.backgroundColorByHexString("#000000");
+                  _this51.statusBar.backgroundColorByHexString("#000000");
 
-                  _this50.splashScreen.hide();
+                  _this51.splashScreen.hide();
                 } catch (nativeErr) {
                   console.log('native chrome skip', nativeErr);
                 }
 
                 try {
-                  _this50.hasInternet = _this50.network.type != _this50.network.Connection.NONE;
+                  _this51.hasInternet = _this51.network.type != _this51.network.Connection.NONE;
 
-                  _this50.network.onDisconnect().subscribe(function () {
-                    _this50.ngZone.run(function () {
-                      return _this50.hasInternet = false;
+                  _this51.network.onDisconnect().subscribe(function () {
+                    _this51.ngZone.run(function () {
+                      return _this51.hasInternet = false;
                     });
                   });
 
-                  _this50.network.onConnect().subscribe(function () {
-                    _this50.ngZone.run(function () {
-                      return _this50.hasInternet = true;
+                  _this51.network.onConnect().subscribe(function () {
+                    _this51.ngZone.run(function () {
+                      return _this51.hasInternet = true;
                     });
                   });
                 } catch (netErr) {
                   console.log('network skip', netErr);
                 }
               } else {
-                _this50.hasInternet = typeof navigator !== 'undefined' && navigator.onLine !== false;
+                _this51.hasInternet = typeof navigator !== 'undefined' && navigator.onLine !== false;
 
                 if (typeof window !== 'undefined') {
                   window.addEventListener('offline', function () {
-                    return _this50.ngZone.run(function () {
-                      return _this50.hasInternet = false;
+                    return _this51.ngZone.run(function () {
+                      return _this51.hasInternet = false;
                     });
                   });
                   window.addEventListener('online', function () {
-                    return _this50.ngZone.run(function () {
-                      return _this50.hasInternet = true;
+                    return _this51.ngZone.run(function () {
+                      return _this51.hasInternet = true;
                     });
                   });
                 }
@@ -10742,38 +10821,38 @@
         return _createClass(AuthGuard, [{
           key: "canActivate",
           value: function canActivate() {
-            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee101() {
+            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee102() {
               var status, _t55;
 
-              return _regenerator().w(function (_context102) {
-                while (1) switch (_context102.p = _context102.n) {
+              return _regenerator().w(function (_context103) {
+                while (1) switch (_context103.p = _context103.n) {
                   case 0:
-                    _context102.p = 0;
-                    _context102.n = 1;
+                    _context103.p = 0;
+                    _context103.n = 1;
                     return this.bs.get(this.bs.IS_AUTH_URL, true);
 
                   case 1:
-                    return _context102.a(2, true);
+                    return _context103.a(2, true);
 
                   case 2:
-                    _context102.p = 2;
-                    _t55 = _context102.v;
+                    _context103.p = 2;
+                    _t55 = _context103.v;
                     status = _t55 && _t55.status; // Solo se vuelve al login si el servidor rechazo la sesion (401/410).
                     // Si fallo la conexion o el servidor no contesto, se deja pasar para que
                     // la app siga funcionando y cada pantalla avise si algo no cargo.
 
                     if (!(status == 401 || status == 410)) {
-                      _context102.n = 3;
+                      _context103.n = 3;
                       break;
                     }
 
                     this.navCtrl.navigateRoot('/login');
-                    return _context102.a(2, false);
+                    return _context103.a(2, false);
 
                   case 3:
-                    return _context102.a(2, true);
+                    return _context103.a(2, true);
                 }
-              }, _callee101, this, [[0, 2]]);
+              }, _callee102, this, [[0, 2]]);
             }));
           }
         }]);
@@ -11154,7 +11233,7 @@
 
       var ClientePage = /*#__PURE__*/function () {
         function ClientePage(bs, navCtrl, modalCtrl, util) {
-          var _this51 = this;
+          var _this52 = this;
 
           _classCallCheck(this, ClientePage);
 
@@ -11165,22 +11244,22 @@
           this.cliente = new _classes_classes__WEBPACK_IMPORTED_MODULE_5__["Cliente"]();
           this.paises = [];
           bs.get(bs.PAIS_URL, true).then(function (data) {
-            _this51.paises = data.clone();
-            if (_this51.cliente.id > -1) _this51.pais = _this51.paises.find(function (x) {
-              return x.id == _this51.cliente.pais.id;
+            _this52.paises = data.clone();
+            if (_this52.cliente.id > -1) _this52.pais = _this52.paises.find(function (x) {
+              return x.id == _this52.cliente.pais.id;
             });
           })["catch"](function (err) {
-            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(_this51, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee102() {
-              return _regenerator().w(function (_context103) {
-                while (1) switch (_context103.n) {
+            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(_this52, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee103() {
+              return _regenerator().w(function (_context104) {
+                while (1) switch (_context104.n) {
                   case 0:
-                    _context103.n = 1;
+                    _context104.n = 1;
                     return util.handleError(err);
 
                   case 1:
-                    return _context103.a(2, _context103.v);
+                    return _context104.a(2, _context104.v);
                 }
-              }, _callee102);
+              }, _callee103);
             }));
           });
         }
@@ -11196,14 +11275,14 @@
         }, {
           key: "modelChanged",
           value: function modelChanged(evt) {
-            var _this52 = this;
+            var _this53 = this;
 
             // console.log(evt.detail.data);
             setTimeout(function () {
-              _this52.cliente.celular = _this52.cliente.celular.replace("-", "");
+              _this53.cliente.celular = _this53.cliente.celular.replace("-", "");
 
-              if (_this52.cliente.celular.length >= 5) {
-                _this52.cliente.celular = _this52.cliente.celular.substring(0, 4) + '-' + _this52.cliente.celular.substring(4, _this52.cliente.celular.length);
+              if (_this53.cliente.celular.length >= 5) {
+                _this53.cliente.celular = _this53.cliente.celular.substring(0, 4) + '-' + _this53.cliente.celular.substring(4, _this53.cliente.celular.length);
               }
             }, 1);
           }
@@ -11225,18 +11304,18 @@
         }, {
           key: "submit",
           value: function submit(form) {
-            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee103() {
+            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee104() {
               var body, c, msg, ex, _t56;
 
-              return _regenerator().w(function (_context104) {
-                while (1) switch (_context104.p = _context104.n) {
+              return _regenerator().w(function (_context105) {
+                while (1) switch (_context105.p = _context105.n) {
                   case 0:
                     if (this.isValid()) {
-                      _context104.n = 1;
+                      _context105.n = 1;
                       break;
                     }
 
-                    return _context104.a(2);
+                    return _context105.a(2);
 
                   case 1:
                     // let body = new BodyForm();
@@ -11244,34 +11323,34 @@
                     body = {
                       'cliente': JSON.stringify(this.cliente)
                     };
-                    _context104.p = 2;
-                    _context104.n = 3;
+                    _context105.p = 2;
+                    _context105.n = 3;
                     return this.bs.post(this.bs.CLIENTE_URL, body, true);
 
                   case 3:
-                    c = _context104.v;
+                    c = _context105.v;
                     msg = this.cliente.id == -1 ? 'creado con id #' + c.id : 'actualizado';
-                    _context104.n = 4;
+                    _context105.n = 4;
                     return this.util.presentAlert('Mensaje', 'Cliente ' + msg + ' con éxito.');
 
                   case 4:
                     this.modalCtrl.dismiss({
                       cliente: c || this.cliente
                     });
-                    _context104.n = 6;
+                    _context105.n = 6;
                     break;
 
                   case 5:
-                    _context104.p = 5;
-                    _t56 = _context104.v;
+                    _context105.p = 5;
+                    _t56 = _context105.v;
                     ex = _t56; // alert('Error: ' + ex.message);
 
                     this.util.handleError(ex);
 
                   case 6:
-                    return _context104.a(2);
+                    return _context105.a(2);
                 }
-              }, _callee103, this, [[2, 5]]);
+              }, _callee104, this, [[2, 5]]);
             }));
           }
         }, {
@@ -13544,7 +13623,7 @@
 
       var ReporteCompletoPage = /*#__PURE__*/function () {
         function ReporteCompletoPage(modalCtrl, cdRef, loadCtrl, currencyPipe, socialSharing, util, bs) {
-          var _this53 = this;
+          var _this54 = this;
 
           _classCallCheck(this, ReporteCompletoPage);
 
@@ -13584,7 +13663,7 @@
           this.cantidad = 0;
           this.shown = false;
           this.bs.getEmpleado().then(function (e) {
-            return _this53.isAdmin = e.usuario.isadmin;
+            return _this54.isAdmin = e.usuario.isadmin;
           });
           this.critero = this.criterios[0]; // pdfMake.vfs = pdfFonts.pdfMake.vfs;
         }
@@ -13595,7 +13674,7 @@
         }, {
           key: "search",
           value: function search(evt) {
-            var _this54 = this;
+            var _this55 = this;
 
             var term = evt.target.value; // console.log(term);
             // console.log(this.originales);
@@ -13604,10 +13683,10 @@
               return x.numero.toString() == term;
             });
             if (!isNaN(this.mayorIgualQueCantidad)) this.numeros = this.numeros.filter(function (x) {
-              return x.inversion >= Number(_this54.mayorIgualQueCantidad);
+              return x.inversion >= Number(_this55.mayorIgualQueCantidad);
             });
             if (!isNaN(this.menorIgualQueCantidad)) this.numeros = this.numeros.filter(function (x) {
-              return x.inversion <= Number(_this54.menorIgualQueCantidad);
+              return x.inversion <= Number(_this55.menorIgualQueCantidad);
             }); // if (isNaN(Number(this.cantidad)))
             //   return;
             // this.cantidad = Number(this.cantidad);
@@ -13675,23 +13754,23 @@
         }, {
           key: "print",
           value: function print() {
-            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee104() {
-              var _this55 = this;
+            return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee105() {
+              var _this56 = this;
 
               var loading, content, tbody, docDefinition;
-              return _regenerator().w(function (_context105) {
-                while (1) switch (_context105.n) {
+              return _regenerator().w(function (_context106) {
+                while (1) switch (_context106.n) {
                   case 0:
                     this.shown = false;
                     this.cdRef.detectChanges();
-                    _context105.n = 1;
+                    _context106.n = 1;
                     return this.loadCtrl.create({
                       message: 'Generando reporte...'
                     });
 
                   case 1:
-                    loading = _context105.v;
-                    _context105.n = 2;
+                    loading = _context106.v;
+                    _context106.n = 2;
                     return loading.present();
 
                   case 2:
@@ -13719,7 +13798,7 @@
                         bold: true
                       }]];
                       this.numeros.forEach(function (n) {
-                        tbody.push([n.numero, _this55.currencyPipe.transform(n.inversion), _this55.currencyPipe.transform(n.ganancia)]);
+                        tbody.push([n.numero, _this56.currencyPipe.transform(n.inversion), _this56.currencyPipe.transform(n.ganancia)]);
                       });
                       tbody.push([{
                         text: 'Total',
@@ -13768,10 +13847,10 @@
                         loading.dismiss();
                         var base64 = 'data:application/pdf;base64,' + data;
 
-                        _this55.socialSharing.share('Reporte del ' + moment__WEBPACK_IMPORTED_MODULE_6___default()(_this55.fecha).format('DD/MM/YYYY'), '', base64).then(function (d) {
+                        _this56.socialSharing.share('Reporte del ' + moment__WEBPACK_IMPORTED_MODULE_6___default()(_this56.fecha).format('DD/MM/YYYY'), '', base64).then(function (d) {
                           return console.log(d);
                         })["catch"](function (err) {
-                          return _this55.util.handleError(err.message ? err : {
+                          return _this56.util.handleError(err.message ? err : {
                             message: err
                           });
                         });
@@ -13784,9 +13863,9 @@
                     }
 
                   case 3:
-                    return _context105.a(2);
+                    return _context106.a(2);
                 }
-              }, _callee104, this);
+              }, _callee105, this);
             }));
           }
         }]);

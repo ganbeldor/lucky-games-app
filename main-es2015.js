@@ -1944,6 +1944,8 @@ let BoletoPage = BoletoPage_1 = class BoletoPage {
         this.preview = false;
         this.factura_nombre = '';
         this.printReceipt = true;
+        // despues de imprimir el frente se pregunta por el dorso del boleto
+        this.dorsoPendiente = false;
         this.numerosRegulares = [];
         this.numerosJuega3 = [];
         this.numerosFechas = [];
@@ -2758,6 +2760,14 @@ let BoletoPage = BoletoPage_1 = class BoletoPage {
                     catch (error) {
                         yield this.util.presentAlert('Error', 'Error al desconectar la impresora, por favor reiniciar el Bluetooth');
                     }
+                    // Dorso: hay que dar vuelta el boleto y volver a meterlo
+                    if (this.dorsoPendiente) {
+                        this.dorsoPendiente = false;
+                        if (yield this.preguntarDorso()) {
+                            yield this.print(device, this.buildDorso());
+                            return;
+                        }
+                    }
                     this.handleMultimedia();
                     // if (this.boleto.id != -1) 
                     //   this.modalCtrl.dismiss();
@@ -2776,6 +2786,60 @@ let BoletoPage = BoletoPage_1 = class BoletoPage {
                 this.handleMultimedia();
             }));
         });
+    }
+    // El dorso se imprime en una segunda pasada: el operador voltea el boleto
+    // y lo vuelve a meter en la impresora.
+    preguntarDorso() {
+        return new Promise((resolve) => Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, function* () {
+            const alert = yield this.alertCtrl.create({
+                header: 'Reverso del boleto',
+                message: 'Voltee el boleto y vuelva a meterlo en la impresora para imprimir la advertencia del dorso.',
+                backdropDismiss: false,
+                buttons: [
+                    {
+                        text: 'Omitir',
+                        role: 'cancel',
+                        handler: () => resolve(false)
+                    },
+                    {
+                        text: 'Imprimir dorso',
+                        handler: () => resolve(true)
+                    }
+                ]
+            });
+            yield alert.present();
+        }));
+    }
+    buildDorso() {
+        const encoder = new esc_pos_encoder__WEBPACK_IMPORTED_MODULE_11___default.a();
+        const result = encoder.initialize();
+        result.raw([0x1c, 0x2e]);
+        result.raw([0x1b, 0x74, 0x10]);
+        result._codepage = 'windows1252';
+        const hr = this.util.commands.HORIZONTAL_LINE.HR_58MM;
+        result.align('center')
+            .raw([0x1B, 0x21, 0x03])
+            .size('normal')
+            .line(hr)
+            .bold(true)
+            .line('ADVERTENCIA')
+            .bold(false)
+            .align('left')
+            .line('Revise su boleto; no aceptamos')
+            .line('reclamos después del sorteo.')
+            .newline()
+            .line('El trabajador no es un robot y')
+            .line('puede cometer errores, pero')
+            .line('recuerde que es su dinero.')
+            .newline()
+            .line('No nos hacemos responsables')
+            .line('después del sorteo.')
+            .align('center')
+            .line(hr)
+            .newline()
+            .newline()
+            .cut('partial');
+        return result.encode();
     }
     reset() {
         return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, function* () {
@@ -2892,6 +2956,7 @@ let BoletoPage = BoletoPage_1 = class BoletoPage {
                 receipt += commands.EOL;
                 receipt += commands.EOL;*/
             //this.receipt = receipt;
+            this.dorsoPendiente = true;
             var getSpaces = function getSpaces(n) {
                 var x = '';
                 for (var i = 0; i < n; i++) {
@@ -3062,32 +3127,9 @@ let BoletoPage = BoletoPage_1 = class BoletoPage {
             result.barcode(this.boleto.scan_code, 'code128', 60)
                 .newline()
                 .newline()
-                .newline();
-            // Reverso del boleto: aviso fijo, sale siempre en la misma
-            // impresion que el frente (todo de una sola vez).
-            result
-                .align('center')
-                .raw([0x1B, 0x21, 0x03])
-                .size('normal')
-                .line(line)
-                .bold(true)
-                .line('ADVERTENCIA')
-                .bold(false)
-                .align('left')
-                .line('Revise su boleto; no aceptamos')
-                .line('reclamos después del sorteo.')
                 .newline()
-                .line('El trabajador no es un robot y')
-                .line('puede cometer errores, pero')
-                .line('recuerde que es su dinero.')
-                .newline()
-                .line('No nos hacemos responsables')
-                .line('después del sorteo.')
-                .align('center')
-                .line(line)
-                .newline()
-                .newline();
-            result.cut('partial');
+                .cut('partial');
+            // .cut();
             // .cut();
             // .qrcode(qr, 1, 8, 'h')
             this.mountAlertBt(result.encode());
