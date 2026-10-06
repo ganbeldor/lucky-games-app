@@ -7984,6 +7984,10 @@ const routes = [
         loadChildren: () => __webpack_require__.e(/*! import() | pages-cierre-caja-cierre-caja-module */ "pages-cierre-caja-cierre-caja-module").then(__webpack_require__.bind(null, /*! ./pages/cierre-caja/cierre-caja.module */ "9LmO")).then(m => m.CierreCajaPageModule)
     },
     {
+        path: 'ganadores',
+        loadChildren: () => __webpack_require__.e(/*! import() | pages-ganadores-ganadores-module */ "pages-ganadores-ganadores-module").then(__webpack_require__.bind(null, /*! ./pages/ganadores/ganadores.module */ "4bRc")).then(m => m.GanadoresPageModule)
+    },
+    {
         path: 'balanceo',
         loadChildren: () => __webpack_require__.e(/*! import() | pages-balanceo-balanceo-module */ "pages-balanceo-balanceo-module").then(__webpack_require__.bind(null, /*! ./pages/balanceo/balanceo.module */ "MF0o")).then(m => m.BalanceoPageModule)
     },

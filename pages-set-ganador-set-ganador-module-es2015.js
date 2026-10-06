@@ -18,6 +18,9 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var src_app_services_base_service__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! src/app/services/base.service */ "Do2H");
 /* harmony import */ var src_app_util_util__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! src/app/util/util */ "JQC8");
 /* harmony import */ var _ionic_angular__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! @ionic/angular */ "TEn/");
+/* harmony import */ var moment__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! moment */ "wd/R");
+/* harmony import */ var moment__WEBPACK_IMPORTED_MODULE_8___default = /*#__PURE__*/__webpack_require__.n(moment__WEBPACK_IMPORTED_MODULE_8__);
+
 
 
 
@@ -53,7 +56,20 @@ let SetGanadorPage = class SetGanadorPage {
             this.cargando = true;
             try {
                 const sorteos = yield this.bs.get(this.bs.SORTEO_URL + '/true', true);
-                this.sorteos = (sorteos || []).sort((a, b) => String(a.hora || '').localeCompare(String(b.hora || '')));
+                // solo los sorteos que tuvieron venta hoy: evita la lista larga de
+                // sorteos repetidos (CR, HN, NICA...) en los que no hay nada que fijar
+                let conVenta = null;
+                try {
+                    const hoy = moment__WEBPACK_IMPORTED_MODULE_8___default()().format('YYYY/MM/DD');
+                    const boletos = yield this.bs.post(this.bs.BOLETO_URL + '/get/true', { from_date: hoy + ' 00:00:00.000000', to_date: hoy + ' 23:59:59.999999' }, true);
+                    conVenta = new Set((boletos || []).map(b => String(b.sorteo_id)));
+                }
+                catch (e) {
+                    conVenta = null; // sin lista de ventas mostramos todos, mejor eso que nada
+                }
+                this.sorteos = (sorteos || [])
+                    .filter(s => !conVenta || conVenta.has(String(s.id)))
+                    .sort((a, b) => String(a.hora || '').localeCompare(String(b.hora || '')));
                 const activos = yield this.bs.get(this.bs.JUEGO_URL + '/activos', true);
                 this.ganadores = {};
                 (activos || []).forEach(grupo => (grupo || []).forEach(j => {
@@ -244,7 +260,7 @@ SetGanadorPageRoutingModule = Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__decor
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony default export */ __webpack_exports__["default"] = ("<ion-header>\n    <ion-toolbar color='light'>\n        <ion-buttons slot=\"start\">\n            <ion-back-button [text]='\"\"' defaultHref='/tabs/tab1'></ion-back-button>\n        </ion-buttons>\n        <ion-title class=\"center\">Establecer ganador</ion-title>\n    </ion-toolbar>\n    <ion-toolbar color='light'>\n        <ion-item>\n            <ion-label>Sorteo:</ion-label>\n            <ion-select placeholder='Seleccione un sorteo' [(ngModel)]='sorteo_id' (ionChange)='sorteoChanged()'\n                [disabled]='cargando || sorteos.length == 0'>\n                <ion-select-option *ngFor='let s of sorteos' [value]='s.id'>\n                    {{s.sorteo_nombre}} - {{s.hora | date: 'hh:mm a'}}\n                </ion-select-option>\n            </ion-select>\n        </ion-item>\n    </ion-toolbar>\n</ion-header>\n\n<ion-content class=\"ion-padding\">\n    <div *ngIf='cargando' class=\"ion-text-center ion-padding\">\n        Cargando...\n    </div>\n\n    <ion-card *ngIf='!cargando && sorteo'>\n        <ion-card-header>\n            <ion-card-title>{{sorteo.sorteo_nombre}}</ion-card-title>\n            <ion-card-subtitle>{{sorteo.hora | date: 'EEEE dd/MM/yyyy hh:mm a'}}</ion-card-subtitle>\n        </ion-card-header>\n        <ion-card-content>\n            <ion-item lines='none'>\n                <ion-label>Número ganador actual:</ion-label>\n                <ion-badge slot=\"end\" [color]=\"ganadorActual ? 'success' : 'medium'\">\n                    {{ganadorActual ? ganadorActual : 'Sin ganador'}}\n                </ion-badge>\n            </ion-item>\n            <form (ngSubmit)='guardar()'>\n                <ion-item>\n                    <ion-label position='floating'>Nuevo número ganador (00 - 99)</ion-label>\n                    <ion-input name='numero' inputmode='numeric' maxlength='2' [(ngModel)]='numero'></ion-input>\n                </ion-item>\n                <div class=\"btn-container\">\n                    <ion-button type='submit' [disabled]='!isValid()'>\n                        {{guardando ? 'Guardando...' : 'Establecer'}}\n                        <ion-icon name=\"trophy\"></ion-icon>\n                    </ion-button>\n                </div>\n            </form>\n        </ion-card-content>\n    </ion-card>\n\n    <div *ngIf='!cargando && sorteos.length == 0' class=\"ion-text-center ion-padding\">\n        No hay sorteos disponibles.\n    </div>\n</ion-content>\n");
+/* harmony default export */ __webpack_exports__["default"] = ("<ion-header>\n    <ion-toolbar color='light'>\n        <ion-buttons slot=\"start\">\n            <ion-back-button [text]='\"\"' defaultHref='/tabs/tab1'></ion-back-button>\n        </ion-buttons>\n        <ion-title class=\"center\">Establecer ganador</ion-title>\n    </ion-toolbar>\n    <ion-toolbar color='light'>\n        <ion-item>\n            <ion-label>Sorteo:</ion-label>\n            <ion-select placeholder='Seleccione un sorteo' [(ngModel)]='sorteo_id' (ionChange)='sorteoChanged()'\n                [disabled]='cargando || sorteos.length == 0'>\n                <ion-select-option *ngFor='let s of sorteos' [value]='s.id'>\n                    {{s.sorteo_nombre}} - {{s.hora | date: 'hh:mm a'}}\n                </ion-select-option>\n            </ion-select>\n        </ion-item>\n    </ion-toolbar>\n</ion-header>\n\n<ion-content class=\"ion-padding\">\n    <div *ngIf='cargando' class=\"ion-text-center ion-padding\">\n        Cargando...\n    </div>\n\n    <ion-card *ngIf='!cargando && sorteo'>\n        <ion-card-header>\n            <ion-card-title>{{sorteo.sorteo_nombre}}</ion-card-title>\n            <ion-card-subtitle>{{sorteo.hora | date: 'EEEE dd/MM/yyyy hh:mm a'}}</ion-card-subtitle>\n        </ion-card-header>\n        <ion-card-content>\n            <ion-item lines='none'>\n                <ion-label>Número ganador actual:</ion-label>\n                <ion-badge slot=\"end\" [color]=\"ganadorActual ? 'success' : 'medium'\">\n                    {{ganadorActual ? ganadorActual : 'Sin ganador'}}\n                </ion-badge>\n            </ion-item>\n            <form (ngSubmit)='guardar()'>\n                <ion-item>\n                    <ion-label position='floating'>Nuevo número ganador (00 - 99)</ion-label>\n                    <ion-input name='numero' inputmode='numeric' maxlength='2' [(ngModel)]='numero'></ion-input>\n                </ion-item>\n                <div class=\"btn-container\">\n                    <ion-button type='submit' [disabled]='!isValid()'>\n                        {{guardando ? 'Guardando...' : 'Establecer'}}\n                        <ion-icon name=\"trophy\"></ion-icon>\n                    </ion-button>\n                </div>\n            </form>\n        </ion-card-content>\n    </ion-card>\n\n    <div *ngIf='!cargando && sorteos.length == 0' class=\"ion-text-center ion-padding\">\n        No hubo ventas hoy en ningún sorteo.\n    </div>\n</ion-content>\n");
 
 /***/ })
 

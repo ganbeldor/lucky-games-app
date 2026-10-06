@@ -13290,6 +13290,17 @@
           });
         }
       }, {
+        path: 'ganadores',
+        loadChildren: function loadChildren() {
+          return __webpack_require__.e(
+          /*! import() | pages-ganadores-ganadores-module */
+          "pages-ganadores-ganadores-module").then(__webpack_require__.bind(null,
+          /*! ./pages/ganadores/ganadores.module */
+          "4bRc")).then(function (m) {
+            return m.GanadoresPageModule;
+          });
+        }
+      }, {
         path: 'balanceo',
         loadChildren: function loadChildren() {
           return __webpack_require__.e(
