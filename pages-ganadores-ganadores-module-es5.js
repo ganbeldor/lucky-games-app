@@ -265,6 +265,14 @@
             this.timer = setInterval(function () {
               return _this.cargarGanadores(true);
             }, 10000);
+          } // Juega 3 / 3 Monazos (tipo j3) no entra al reporte de ganadores
+
+        }, {
+          key: "esJuega3",
+          value: function esJuega3(s) {
+            if (!s) return false;
+            var tipo = s.sorteo_tipo || s.grupo && s.grupo.sorteo_tipo || '';
+            return tipo === 'j3' || /juega\s*3|monazos/i.test(String(s.sorteo_nombre || ''));
           }
         }, {
           key: "cargarSorteos",
@@ -272,7 +280,7 @@
             return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, /*#__PURE__*/_regenerator().m(function _callee2() {
               var _this2 = this;
 
-              var sorteos, conVenta, hoy, boletos, _t2;
+              var sorteos, conVenta, boletos, intento, hoy, _t2;
 
               return _regenerator().w(function (_context2) {
                 while (1) switch (_context2.p = _context2.n) {
@@ -285,29 +293,46 @@
                   case 2:
                     sorteos = _context2.v;
                     conVenta = null;
-                    _context2.p = 3;
+                    boletos = null;
+                    intento = 0;
+
+                  case 3:
+                    if (!(intento < 2 && !Array.isArray(boletos))) {
+                      _context2.n = 8;
+                      break;
+                    }
+
+                    _context2.p = 4;
                     hoy = moment__WEBPACK_IMPORTED_MODULE_11___default()().format('YYYY/MM/DD');
-                    _context2.n = 4;
+                    _context2.n = 5;
                     return this.bs.post(this.bs.BOLETO_URL + '/get/true', {
                       from_date: hoy + ' 00:00:00.000000',
                       to_date: hoy + ' 23:59:59.999999'
                     }, true);
 
-                  case 4:
+                  case 5:
                     boletos = _context2.v;
-                    conVenta = new Set((boletos || []).map(function (b) {
-                      return String(b.sorteo_id);
-                    }));
-                    _context2.n = 6;
+                    _context2.n = 7;
                     break;
 
-                  case 5:
-                    _context2.p = 5;
-                    _t2 = _context2.v;
-                    conVenta = null;
-
                   case 6:
+                    _context2.p = 6;
+                    _t2 = _context2.v;
+                    console.log('Ganadores: no se pudieron cargar las ventas de hoy', _t2);
+                    boletos = null;
+
+                  case 7:
+                    intento++;
+                    _context2.n = 3;
+                    break;
+
+                  case 8:
+                    if (Array.isArray(boletos)) conVenta = new Set(boletos.map(function (b) {
+                      return String(b.sorteo_id);
+                    }));
                     this.sorteos = (sorteos || []).filter(function (s) {
+                      return !_this2.esJuega3(s);
+                    }).filter(function (s) {
                       return !conVenta || conVenta.has(String(s.id));
                     }).sort(function (a, b) {
                       return String(a.hora || '').localeCompare(String(b.hora || ''));
@@ -315,18 +340,18 @@
                     if (this.sorteo_id == -1 || !this.sorteos.some(function (s) {
                       return s.id == _this2.sorteo_id;
                     })) this.sorteo_id = this.sorteos.length ? this.sorteos[0].id : -1;
-                    _context2.n = 7;
+                    _context2.n = 9;
                     return this.cargarGanadores(true);
 
-                  case 7:
-                    _context2.p = 7;
+                  case 9:
+                    _context2.p = 9;
                     this.cargando = false;
-                    return _context2.f(7);
+                    return _context2.f(9);
 
-                  case 8:
+                  case 10:
                     return _context2.a(2);
                 }
-              }, _callee2, this, [[3, 5], [1,, 7, 8]]);
+              }, _callee2, this, [[4, 6], [1,, 9, 10]]);
             }));
           }
         }, {

@@ -123,21 +123,34 @@ let GanadoresPage = class GanadoresPage {
             clearInterval(this.timer);
         this.timer = setInterval(() => this.cargarGanadores(true), 10000);
     }
+    // Juega 3 / 3 Monazos (tipo j3) no entra al reporte de ganadores
+    esJuega3(s) {
+        if (!s)
+            return false;
+        const tipo = s.sorteo_tipo || (s.grupo && s.grupo.sorteo_tipo) || '';
+        return tipo === 'j3' || /juega\s*3|monazos/i.test(String(s.sorteo_nombre || ''));
+    }
     cargarSorteos() {
         return Object(tslib__WEBPACK_IMPORTED_MODULE_0__["__awaiter"])(this, void 0, void 0, function* () {
             this.cargando = true;
             try {
                 const sorteos = yield this.bs.get(this.bs.SORTEO_URL + '/true', true);
                 let conVenta = null;
-                try {
-                    const hoy = moment__WEBPACK_IMPORTED_MODULE_11___default()().format('YYYY/MM/DD');
-                    const boletos = yield this.bs.post(this.bs.BOLETO_URL + '/get/true', { from_date: hoy + ' 00:00:00.000000', to_date: hoy + ' 23:59:59.999999' }, true);
-                    conVenta = new Set((boletos || []).map(b => String(b.sorteo_id)));
+                let boletos = null;
+                for (let intento = 0; intento < 2 && !Array.isArray(boletos); intento++) {
+                    try {
+                        const hoy = moment__WEBPACK_IMPORTED_MODULE_11___default()().format('YYYY/MM/DD');
+                        boletos = yield this.bs.post(this.bs.BOLETO_URL + '/get/true', { from_date: hoy + ' 00:00:00.000000', to_date: hoy + ' 23:59:59.999999' }, true);
+                    }
+                    catch (e) {
+                        console.log('Ganadores: no se pudieron cargar las ventas de hoy', e);
+                        boletos = null;
+                    }
                 }
-                catch (e) {
-                    conVenta = null;
-                }
+                if (Array.isArray(boletos))
+                    conVenta = new Set(boletos.map(b => String(b.sorteo_id)));
                 this.sorteos = (sorteos || [])
+                    .filter(s => !this.esJuega3(s))
                     .filter(s => !conVenta || conVenta.has(String(s.id)))
                     .sort((a, b) => String(a.hora || '').localeCompare(String(b.hora || '')));
                 if (this.sorteo_id == -1 || !this.sorteos.some(s => s.id == this.sorteo_id))
