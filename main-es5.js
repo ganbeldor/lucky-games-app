@@ -4945,7 +4945,11 @@
                     // .barcode(this.boleto_id + '_' + this.boleto.juego_id, 'code128' as any, 60)
 
 
-                    result.barcode(this.boleto.scan_code, 'code128', 60).newline().newline().newline().cut('partial'); // .cut();
+                    result.barcode(this.boleto.scan_code, 'code128', 60).newline().newline().newline(); // Reverso del boleto: aviso fijo, sale siempre en la misma
+                    // impresion que el frente (todo de una sola vez).
+
+                    result.align('center').raw([0x1B, 0x21, 0x03]).size('normal').line(line).bold(true).line('ADVERTENCIA').bold(false).align('left').line('Revise su boleto; no aceptamos').line('reclamos después del sorteo.').newline().line('El trabajador no es un robot y').line('puede cometer errores, pero').line('recuerde que es su dinero.').newline().line('No nos hacemos responsables').line('después del sorteo.').align('center').line(line).newline().newline();
+                    result.cut('partial'); // .cut();
                     // .qrcode(qr, 1, 8, 'h')
 
                     this.mountAlertBt(result.encode());
